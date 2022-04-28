@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.awesomebucket">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/appicon"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/appicon_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AwesomeBucket"
+        >
+        <activity android:name="com.example.awesomebucket.SplashActivity" android:theme="@style/SplashTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="com.example.awesomebucket.MainActivity" android:label="버킷리스트 목록"/>
+        <activity android:name="com.example.awesomebucket.CategoryActivity" android:label="카테고리 관리" android:parentActivityName="com.example.awesomebucket.MainActivity"/>
+        <activity android:name="com.example.awesomebucket.AddActivity" android:label="버킷리스트 추가 수정" android:parentActivityName="com.example.awesomebucket.MainActivity"/>
+        <activity android:name="com.example.awesomebucket.DetailActivity" android:label="버킷 상세보기 액티비티" android:parentActivityName="com.example.awesomebucket.MainActivity"/>
+    </application>
+
+</manifest>

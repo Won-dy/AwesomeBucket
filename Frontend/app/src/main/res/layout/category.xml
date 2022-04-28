@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bgColor"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constL"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp">
+
+        <EditText
+            android:id="@+id/ctgrAddEt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="새 카테고리명"
+            android:inputType="text"
+            android:maxLength="10"
+            app:layout_constraintBottom_toBottomOf="@id/constL"
+            app:layout_constraintLeft_toLeftOf="@id/constL"
+            app:layout_constraintRight_toLeftOf="@id/ctgrAddBtn"
+            app:layout_constraintTop_toTopOf="@+id/constL" />
+
+        <Button
+            android:id="@+id/ctgrAddBtn"
+            android:layout_width="70dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:layout_margin="5dp"
+            android:background="@drawable/btn_radius"
+            android:text="추가"
+            android:textColor="@color/purple"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@id/constL"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/constL" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ListView
+        android:id="@+id/listV"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>

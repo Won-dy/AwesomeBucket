@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bgColor"
+    android:orientation="vertical"
+    android:padding="5dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/ctgrTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingRight="5dp"
+            android:text="카테고리"
+            android:textColor="@color/pinkpurple"
+            android:textSize="19sp"
+            android:textStyle="bold"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <EditText
+            android:id="@+id/cNameEt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:focusable="false"
+            app:layout_constraintLeft_toRightOf="@id/ctgrTv"
+            app:layout_constraintRight_toLeftOf="@id/sltCtgrBtn"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/sltCtgrBtn"
+            android:layout_width="65dp"
+            android:layout_height="40dp"
+            android:layout_margin="5dp"
+            android:background="@drawable/btn_radius"
+            android:text="선택"
+            android:textColor="@color/purple"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/cNameEt"
+            app:layout_constraintRight_toLeftOf="@+id/cAddBtn"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/cAddBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/bgColor"
+            android:padding="0px"
+            android:scaleX="0.7"
+            android:scaleY="0.7"
+            android:src="@drawable/ctgr_add"
+            app:layout_constraintBottom_toBottomOf="@+id/cNameEt"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/nameTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingRight="5dp"
+            android:text="버킷명"
+            android:textColor="@color/pinkpurple"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="@id/nameEt" />
+
+        <EditText
+            android:id="@+id/nameEt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:maxLength="30"
+            app:layout_constraintLeft_toRightOf="@+id/memoTv"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cNameEt" />
+
+        <TextView
+            android:id="@+id/memoTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingRight="5dp"
+            android:text="메    모"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/memoEt" />
+
+        <EditText
+            android:id="@+id/memoEt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="top"
+            android:inputType="text|textMultiLine"
+            android:maxLength="255"
+            android:minLines="1"
+            app:layout_constraintLeft_toRightOf="@+id/memoTv"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/nameEt" />
+
+        <TextView
+            android:id="@+id/imprtTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingRight="5dp"
+            android:text="중요도"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/memoEt" />
+
+        <RatingBar
+            android:id="@+id/rB"
+            style="?android:attr/ratingBarStyleIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:isIndicator="false"
+            android:numStars="3"
+            android:rating="1"
+            android:stepSize="1"
+            android:theme="@style/RatingBar"
+            app:layout_constraintBottom_toBottomOf="@+id/imprtTv"
+            app:layout_constraintLeft_toRightOf="@+id/memoTv"
+            app:layout_constraintTop_toBottomOf="@+id/memoEt" />
+
+        <TextView
+            android:id="@+id/achvTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingRight="5dp"
+            android:text="달성률"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/rB" />
+
+        <EditText
+            android:id="@+id/achvEt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ems="5"
+            android:hint="0 ~ 100"
+            android:inputType="number"
+            android:maxLength="3"
+            app:layout_constraintLeft_toRightOf="@+id/memoTv"
+            app:layout_constraintTop_toBottomOf="@+id/rB" />
+
+        <ImageButton
+            android:id="@+id/cpltBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/bgColor"
+            android:padding="0px"
+            android:scaleX="0.6"
+            android:scaleY="0.6"
+            android:src="@drawable/add_achieve"
+            app:layout_constraintBottom_toBottomOf="@+id/achvEt"
+            app:layout_constraintLeft_toRightOf="@+id/achvEt"
+            app:layout_constraintTop_toBottomOf="@+id/rB" />
+
+        <TextView
+            android:id="@+id/tgdTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingRight="5dp"
+            android:text="목표일"
+            android:textColor="@color/pinkpurple"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/achvEt" />
+
+        <EditText
+            android:id="@+id/tgdEt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ems="6"
+            android:focusable="false"
+            app:layout_constraintLeft_toRightOf="@+id/memoTv"
+            app:layout_constraintTop_toBottomOf="@+id/achvEt" />
+
+        <ImageButton
+            android:id="@+id/tgdBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/bgColor"
+            android:padding="0px"
+            android:scaleX="0.8"
+            android:scaleY="0.8"
+            android:src="@drawable/add_calendar"
+            app:layout_constraintBottom_toBottomOf="@+id/tgdEt"
+            app:layout_constraintLeft_toRightOf="@+id/tgdEt"
+            app:layout_constraintTop_toTopOf="@+id/tgdTv" />
+
+        <TextView
+            android:id="@+id/achvdTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingRight="5dp"
+            android:text="달성일"
+            android:textColor="@color/pinkpurple"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tgdEt" />
+
+        <EditText
+            android:id="@+id/achvdEt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ems="6"
+            android:focusable="false"
+            android:visibility="gone"
+            app:layout_constraintLeft_toRightOf="@+id/memoTv"
+            app:layout_constraintTop_toBottomOf="@+id/tgdEt" />
+
+        <ImageButton
+            android:id="@+id/achvdBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/bgColor"
+            android:padding="0px"
+            android:scaleX="0.8"
+            android:scaleY="0.8"
+            android:src="@drawable/add_calendar"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/achvdEt"
+            app:layout_constraintLeft_toRightOf="@+id/achvdEt"
+            app:layout_constraintTop_toTopOf="@+id/achvdTv" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:text="* 필수 입력 항목"
+            android:textColor="@color/pinkpurple"
+            android:textSize="16sp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/achvdEt" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</ScrollView>

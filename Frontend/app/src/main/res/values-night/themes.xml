@@ -1,0 +1,29 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.AwesomeBucket" parent="Theme.AppCompat.Light">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">#5760B5</item>
+        <item name="colorPrimaryVariant">#4456B6</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">#D95CEF</item>
+        <item name="colorSecondaryVariant">@color/pinkpurple</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+
+        <!-- Customize your theme here. -->
+    </style>
+
+    <!-- Splash 화면을 위한 theme -->
+    <style name="SplashTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_icon</item>
+    </style>
+
+    <!--    RatingBar 커스텀 theme-->
+    <style name="RatingBar" parent="Theme.AppCompat">
+        <item name="colorControlNormal">#FAD20F</item>
+        <item name="colorControlActivated">#FABE0B</item>
+    </style>
+
+</resources>
