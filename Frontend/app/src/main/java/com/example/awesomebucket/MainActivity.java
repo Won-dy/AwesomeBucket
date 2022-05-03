@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setTitle("My Awesome Bucket List");
+        setTitle("My Bucket List");
 
         // findViewById() 메소드를 사용하여 activity_main.xml에 정의된 뷰를 inflation(객체화)하여 뷰 참조
         // 뷰 객체 변수에 인플레이팅된 뷰를 할당
@@ -333,9 +333,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
-        // menu_addbucket.xml에서 메뉴 내용을 읽어와 인플레이션하여 메뉴 등록
+        // menu_main.xml에서 메뉴 내용을 읽어와 인플레이션하여 메뉴 등록
         // 메뉴 xml 파일을 클래스와 바인딩하여 인플레이션할 수 있도록해주는 클래스의 싱글톤 이용
-        getMenuInflater().inflate(R.menu.menu_add_bucket, menu);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
@@ -344,11 +344,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {  // 선택된 메뉴 판별 및 처리
-            case R.id.menu_add:  // 버킷 추가 화면으로 이동
+            case R.id.menu_add:  // 버킷 추가 버튼 선택
                 // 명시적 인텐트를 사용하여 AddActivity 호출
                 Intent intent = new Intent(MainActivity.this, AddActivity.class);
                 intent.putExtra("flag", 1);  // Hash 구조(키, 값)로 데이터를 저장하여 flag 값 전달
                 startActivity(intent);
+
+                return true;
+
+            case R.id.menu_logout:  // 로그아웃 버튼 선택
+                // 명시적 인텐트를 사용하여 LoginActivity 호출
+                Intent intent2 = new Intent(MainActivity.this, LoginActivity.class);
+                startActivity(intent2);
+                finish();
 
                 return true;
         }

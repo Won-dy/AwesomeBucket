@@ -11,8 +11,8 @@ public class SplashActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 명시적 인텐트를 사용하여 MainActivity 호출
-        Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+        // 명시적 인텐트를 사용하여 LoginActivity 호출
+        Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
         startActivity(intent);
 
         finish();
