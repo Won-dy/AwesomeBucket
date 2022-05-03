@@ -20,6 +20,8 @@ public class Category extends BaseEntity {  // 카테고리
 
     private String name;  // 카테고리명
 
+    private boolean isDefault;  // 디폴트 여부
+
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "user_id")
     private User user;  // 회원
