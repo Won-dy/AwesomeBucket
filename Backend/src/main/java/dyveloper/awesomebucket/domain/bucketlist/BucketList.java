@@ -13,7 +13,7 @@ import static javax.persistence.FetchType.LAZY;
 public class BucketList extends BaseEntity {  // 버킷리스트
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "bucket_list_id")
     private Long id;  // 버킷리스트 ID
 

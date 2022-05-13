@@ -14,7 +14,7 @@ import static javax.persistence.FetchType.LAZY;
 public class Category extends BaseEntity {  // 카테고리
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "category_id")
     private Long id;  // 카테고리 ID
 
