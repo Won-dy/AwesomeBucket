@@ -1,4 +1,4 @@
-package com.example.awesomebucket;
+package com.example.awesomebucket.activity;
 
 public class CtgrListVItem {  // 각 아이템에 출력될 데이터를 위한 클래스 정의
 

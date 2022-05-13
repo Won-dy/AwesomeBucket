@@ -1,4 +1,4 @@
-package com.example.awesomebucket;
+package com.example.awesomebucket.activity;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -15,6 +15,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+
+import com.example.awesomebucket.MyDBHelper;
+import com.example.awesomebucket.R;
 
 import java.util.ArrayList;
 

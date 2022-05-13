@@ -1,4 +1,4 @@
-package com.example.awesomebucket;
+package com.example.awesomebucket.activity;
 
 public class MainRecyclerVItem {  // 하나의 행에 대한 정보를 담을 클래스
     public String bucketName;

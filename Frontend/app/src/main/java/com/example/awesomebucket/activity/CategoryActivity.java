@@ -1,4 +1,4 @@
-package com.example.awesomebucket;
+package com.example.awesomebucket.activity;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -13,6 +13,9 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.awesomebucket.MyDBHelper;
+import com.example.awesomebucket.R;
 
 public class CategoryActivity extends AppCompatActivity {
 

@@ -1,4 +1,4 @@
-package com.example.awesomebucket;
+package com.example.awesomebucket.activity;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -13,6 +13,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.awesomebucket.R;
 
 import java.util.ArrayList;
 

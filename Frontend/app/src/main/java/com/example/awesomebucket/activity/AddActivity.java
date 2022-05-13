@@ -1,4 +1,4 @@
-package com.example.awesomebucket;
+package com.example.awesomebucket.activity;
 
 import android.app.DatePickerDialog;
 import android.content.DialogInterface;
@@ -24,6 +24,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.awesomebucket.MyDBHelper;
+import com.example.awesomebucket.R;
 
 import java.util.Calendar;
 

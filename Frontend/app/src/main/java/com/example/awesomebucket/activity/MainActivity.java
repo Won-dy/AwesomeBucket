@@ -1,4 +1,4 @@
-package com.example.awesomebucket;
+package com.example.awesomebucket.activity;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,6 +21,11 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.awesomebucket.MyConstant;
+import com.example.awesomebucket.MyDBHelper;
+import com.example.awesomebucket.MySharedPreferences;
+import com.example.awesomebucket.R;
 
 import java.util.ArrayList;
 import java.util.Calendar;

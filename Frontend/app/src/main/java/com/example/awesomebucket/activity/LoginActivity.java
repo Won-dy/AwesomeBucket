@@ -1,4 +1,4 @@
-package com.example.awesomebucket;
+package com.example.awesomebucket.activity;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -11,6 +11,9 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import com.example.awesomebucket.MyConstant;
+import com.example.awesomebucket.MySharedPreferences;
+import com.example.awesomebucket.R;
 import com.example.awesomebucket.api.APIClient;
 import com.example.awesomebucket.api.LoginAPIService;
 import com.example.awesomebucket.dto.ErrorResultDto;

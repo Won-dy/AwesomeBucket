@@ -1,4 +1,4 @@
-package com.example.awesomebucket;
+package com.example.awesomebucket.activity;
 
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -20,6 +20,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.awesomebucket.MyDBHelper;
+import com.example.awesomebucket.R;
 
 public class DetailActivity extends AppCompatActivity {
 
