@@ -353,6 +353,10 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_logout:  // 로그아웃 버튼 선택
+
+                // SharedPreferences에서 로그인한 User ID 제거
+                MySharedPreferences.removeOne(getApplicationContext(), MyConstant.PREFERENCE_FILE_USER, "loginUserId");
+
                 // 명시적 인텐트를 사용하여 LoginActivity 호출
                 Intent intent2 = new Intent(MainActivity.this, LoginActivity.class);
                 startActivity(intent2);

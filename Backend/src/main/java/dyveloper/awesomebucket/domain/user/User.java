@@ -3,12 +3,14 @@ package dyveloper.awesomebucket.domain.user;
 import dyveloper.awesomebucket.domain.BaseEntity;
 import dyveloper.awesomebucket.domain.bucketlist.BucketList;
 import dyveloper.awesomebucket.domain.category.Category;
+import lombok.Getter;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Getter
 public class User extends BaseEntity {  // 회원
 
     @Id
