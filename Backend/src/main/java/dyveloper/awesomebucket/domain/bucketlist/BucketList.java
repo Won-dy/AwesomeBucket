@@ -3,12 +3,14 @@ package dyveloper.awesomebucket.domain.bucketlist;
 import dyveloper.awesomebucket.domain.BaseEntity;
 import dyveloper.awesomebucket.domain.category.Category;
 import dyveloper.awesomebucket.domain.user.User;
+import lombok.Getter;
 
 import javax.persistence.*;
 import java.time.LocalDate;
 
 import static javax.persistence.FetchType.LAZY;
 
+@Getter
 @Entity
 public class BucketList extends BaseEntity {  // 버킷리스트
 
