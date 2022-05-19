@@ -19,6 +19,7 @@ import com.example.awesomebucket.api.LoginApiService;
 import com.example.awesomebucket.dto.ErrorResultDto;
 import com.example.awesomebucket.dto.ResultDto;
 import com.example.awesomebucket.dto.UserDto;
+import com.example.awesomebucket.exception.NoInputDataException;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -64,73 +65,79 @@ public class LoginActivity extends Activity {
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String email = idET.getText().toString();
-                String password = pwET.getText().toString();
+                try {
+                    String email = idET.getText().toString().trim();
+                    String password = pwET.getText().toString().trim();
 
-                loginApiService = client.create(LoginApiService.class);
-                Call<ResultDto> call = loginApiService.login(new UserDto.LoginRequestDto(email, password));
-                call.enqueue(new Callback<ResultDto>() {
-                    @SneakyThrows
-                    @Override
-                    public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
-                        ResultDto result = response.body();  // 응답 결과 바디
+                    if (email.getBytes().length <= 0 || password.getBytes().length <= 0)
+                        throw new NoInputDataException("아이디와 비밀번호를 모두 입력하세요");
 
-                        if (result != null && response.isSuccessful()) {
-                            int resultStatus = result.getStatus();  // 응답 상태
-                            String resultMessage = result.getMessage();  // 응답 메시지
-                            Object resultData = result.getData();  // 응답 데이터
+                    loginApiService = client.create(LoginApiService.class);
+                    Call<ResultDto> call = loginApiService.login(new UserDto.LoginRequestDto(email, password));
+                    call.enqueue(new Callback<ResultDto>() {
+                        @SneakyThrows
+                        @Override
+                        public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
+                            ResultDto result = response.body();  // 응답 결과 바디
 
-                            // 응답 데이터를 LoginResponseDto로 convert
-                            String jsonResult = new Gson().toJson(resultData);
-                            UserDto.LoginResponseDto loginResponseDto = new Gson().fromJson(jsonResult, UserDto.LoginResponseDto.class);
+                            if (result != null && response.isSuccessful()) {
+                                int resultStatus = result.getStatus();  // 응답 상태
+                                String resultMessage = result.getMessage();  // 응답 메시지
+                                Object resultData = result.getData();  // 응답 데이터
 
-                            long id = loginResponseDto.getId();  // 로그인 한 회원 id
+                                // 응답 데이터를 LoginResponseDto로 convert
+                                String jsonResult = new Gson().toJson(resultData);
+                                UserDto.LoginResponseDto loginResponseDto = new Gson().fromJson(jsonResult, UserDto.LoginResponseDto.class);
 
-                            // User ID 저장
-                            MySharedPreferences.setLoginUserId(getApplicationContext(), MyConstant.PREFERENCE_FILE_USER, "loginUserId", id);
-                            Long loginUserId = MySharedPreferences.getLoginUserId(getApplicationContext(), MyConstant.PREFERENCE_FILE_USER, "loginUserId");
+                                long id = loginResponseDto.getId();  // 로그인 한 회원 id
 
-                            Log.i("Login", "SUCCESS. Hello, " + id);
+                                // User ID 저장
+                                MySharedPreferences.setLoginUserId(getApplicationContext(), MyConstant.PREFERENCE_FILE_USER, "loginUserId", id);
+                                Long loginUserId = MySharedPreferences.getLoginUserId(getApplicationContext(), MyConstant.PREFERENCE_FILE_USER, "loginUserId");
 
-                            // 메인 화면으로 이동
-                            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                            startActivity(intent);
-                        } else {
-                            Log.i("Login", "FAIL");
-                            Log.e("Response error", response.toString());
+                                Log.i("Login", "SUCCESS. Hello, " + id);
 
-                            try {
-                                // 에러 바디를 ErrorResultDto로 convert
-                                Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
-                                ErrorResultDto error = errorConverter.convert(response.errorBody());
+                                // 메인 화면으로 이동
+                                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                                startActivity(intent);
+                            } else {
+                                try {
+                                    Log.i("Login", "FAIL");
+                                    Log.e("Response error", response.toString());
+                                    // 에러 바디를 ErrorResultDto로 convert
+                                    Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                                    ErrorResultDto error = errorConverter.convert(response.errorBody());
 
-                                Log.e("ErrorResultDto", error.toString());
+                                    Log.e("ErrorResultDto", error.toString());
 
-                                int errorStatus = error.getStatus();  // 에러 상태
-                                String errorError = error.getError();  // 에러 이유
-                                String errorMessage = error.getMessage();  // 에러 메시지
+                                    int errorStatus = error.getStatus();  // 에러 상태
+                                    String errorError = error.getError();  // 에러 이유
+                                    String errorMessage = error.getMessage();  // 에러 메시지
 
-                                // 로그인 실패
-                                if (errorMessage != null) {  // 개발자가 설정한 오류
-                                    PrintToast(errorMessage);  // 에러 메시지 출력
-                                } else {  // 기타 오류
-                                    if (errorStatus >= 500) {  // 서버 오류
-                                        PrintToast("Server Error");
-                                    } else if (errorStatus >= 400) {  // 클라이언트 오류
-                                        PrintToast("Client Error");
+                                    // 로그인 실패
+                                    if (errorMessage != null) {  // 개발자가 설정한 오류
+                                        PrintToast(errorMessage);  // 에러 메시지 출력
+                                    } else {  // 기타 오류
+                                        if (errorStatus >= 500) {  // 서버 오류
+                                            PrintToast("Server Error");
+                                        } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                            PrintToast("Client Error");
+                                        }
                                     }
+                                } catch (IOException e) {
+                                    e.printStackTrace();
                                 }
-                            } catch (IOException e) {
-                                e.printStackTrace();
                             }
                         }
-                    }
 
-                    @Override
-                    public void onFailure(Call<ResultDto> call, Throwable t) {
-                        Log.e("Throwable error", t.getMessage());
-                    }
-                });
+                        @Override
+                        public void onFailure(Call<ResultDto> call, Throwable t) {
+                            Log.e("Throwable error", t.getMessage());
+                        }
+                    });
+                } catch (NoInputDataException e) {
+                    PrintToast(e.getMessage());
+                }
             }
         });
     }
