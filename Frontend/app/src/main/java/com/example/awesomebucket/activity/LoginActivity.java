@@ -15,11 +15,13 @@ import com.example.awesomebucket.MyConstant;
 import com.example.awesomebucket.MySharedPreferences;
 import com.example.awesomebucket.R;
 import com.example.awesomebucket.api.APIClient;
-import com.example.awesomebucket.api.LoginAPIService;
+import com.example.awesomebucket.api.LoginApiService;
 import com.example.awesomebucket.dto.ErrorResultDto;
 import com.example.awesomebucket.dto.ResultDto;
 import com.example.awesomebucket.dto.UserDto;
 import com.google.gson.Gson;
+
+import java.io.IOException;
 
 import lombok.SneakyThrows;
 import okhttp3.ResponseBody;
@@ -35,7 +37,7 @@ public class LoginActivity extends Activity {
     TextView idET, pwET;
 
     Retrofit client = APIClient.getClient();
-    LoginAPIService loginAPIService;
+    LoginApiService loginApiService;
 
     // 커스텀 토스트 메시지
     View toastView;
@@ -65,8 +67,8 @@ public class LoginActivity extends Activity {
                 String email = idET.getText().toString();
                 String password = pwET.getText().toString();
 
-                loginAPIService = client.create(LoginAPIService.class);
-                Call<ResultDto> call = loginAPIService.login(new UserDto.LoginRequestDto(email, password));
+                loginApiService = client.create(LoginApiService.class);
+                Call<ResultDto> call = loginApiService.login(new UserDto.LoginRequestDto(email, password));
                 call.enqueue(new Callback<ResultDto>() {
                     @SneakyThrows
                     @Override
@@ -97,25 +99,29 @@ public class LoginActivity extends Activity {
                             Log.i("Login", "FAIL");
                             Log.e("Response error", response.toString());
 
-                            // 에러 바디를 ErrorResultDto로 convert
-                            Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
-                            ErrorResultDto error = errorConverter.convert(response.errorBody());
+                            try {
+                                // 에러 바디를 ErrorResultDto로 convert
+                                Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                                ErrorResultDto error = errorConverter.convert(response.errorBody());
 
-                            Log.e("ErrorResultDto", error.toString());
+                                Log.e("ErrorResultDto", error.toString());
 
-                            int errorStatus = error.getStatus();  // 에러 상태
-                            String errorError = error.getError();  // 에러 이유
-                            String errorMessage = error.getMessage();  // 에러 메시지
+                                int errorStatus = error.getStatus();  // 에러 상태
+                                String errorError = error.getError();  // 에러 이유
+                                String errorMessage = error.getMessage();  // 에러 메시지
 
-                            // 로그인 실패
-                            if (errorMessage != null) {  // 개발자가 설정한 오류
-                                PrintToast(errorMessage);  // 에러 메시지 출력
-                            } else {  // 기타 오류
-                                if (errorStatus >= 500) {  // 서버 오류
-                                    PrintToast("Server Error");
-                                } else if (errorStatus >= 400) {  // 클라이언트 오류
-                                    PrintToast("Client Error");
+                                // 로그인 실패
+                                if (errorMessage != null) {  // 개발자가 설정한 오류
+                                    PrintToast(errorMessage);  // 에러 메시지 출력
+                                } else {  // 기타 오류
+                                    if (errorStatus >= 500) {  // 서버 오류
+                                        PrintToast("Server Error");
+                                    } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                        PrintToast("Client Error");
+                                    }
                                 }
+                            } catch (IOException e) {
+                                e.printStackTrace();
                             }
                         }
                     }

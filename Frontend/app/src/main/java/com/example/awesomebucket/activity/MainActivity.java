@@ -1,11 +1,5 @@
 package com.example.awesomebucket.activity;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -21,6 +15,12 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.awesomebucket.MyConstant;
 import com.example.awesomebucket.MyDBHelper;
@@ -46,6 +46,11 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView mRecyclerView;
     RecyclerView.LayoutManager mLayoutManager;
 
+    // 커스텀 토스트 메시지
+    View toastView;
+    TextView toastTv;
+    Toast toast;
+
     String title, target_date;
     String bucketName, d_day, dDay;
     String sltCtgr;
@@ -66,6 +71,11 @@ public class MainActivity extends AppCompatActivity {
         ctgrSpn = findViewById(R.id.ctgrSpn);
         sortSpn = findViewById(R.id.sortSpn);
         ctgrManagerBtn = findViewById(R.id.ctgrManagerBtn);
+
+        // toast.xml을 View로 inflating하고 뷰 참조 후 뷰 객체 변수에 인플레이팅된 뷰를 할당
+        toast = new Toast(getApplicationContext());
+        toastView = (View) View.inflate(getApplicationContext(), R.layout.toast, null);
+        toastTv = (TextView) toastView.findViewById(R.id.toastTv);
 
         myDBHelper = new MyDBHelper(this);  // DB와 Table 생성 (MyDBHelper.java의 생성자, onCreate() 호출)
 
@@ -358,18 +368,24 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_logout:  // 로그아웃 버튼 선택
-
-                // SharedPreferences에서 로그인한 User ID 제거
-                MySharedPreferences.removeOne(getApplicationContext(), MyConstant.PREFERENCE_FILE_USER, "loginUserId");
-
-                // 명시적 인텐트를 사용하여 LoginActivity 호출
-                Intent intent2 = new Intent(MainActivity.this, LoginActivity.class);
-                startActivity(intent2);
-                finish();
+                PrintToast("로그아웃 되었습니다");
+                logout();
 
                 return true;
         }
         return false;
+    }
+
+
+    //**************************** 로그아웃을 위한 logout() 함수 정의 ********************************
+    public void logout() {
+        // SharedPreferences에서 로그인한 User ID 제거
+        MySharedPreferences.removeOne(getApplicationContext(), MyConstant.PREFERENCE_FILE_USER, "loginUserId");
+
+        // 명시적 인텐트를 사용하여 LoginActivity 호출
+        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 
 
@@ -448,6 +464,16 @@ public class MainActivity extends AppCompatActivity {
         cursor.close();
         sqlDB.close();
     }
+
+
+    //**************************** 커스텀 토스트 메세지 출력을 위한 PrintToast() 함수 정의 ********************************
+    public void PrintToast(String msg) {
+        // toast.xml이 msg 내용의 토스트 메세지로 나오도록 설정
+        toastTv.setText(msg);
+        toast.setView(toastView);
+        toast.show();
+    }
+
 
     //**************************** 뒤로가기 버튼을 눌렀을 때의 이벤트 처리 ********************************
     @Override
