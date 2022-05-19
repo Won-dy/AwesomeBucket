@@ -3,6 +3,7 @@ package dyveloper.awesomebucket.domain.category;
 import dyveloper.awesomebucket.domain.BaseEntity;
 import dyveloper.awesomebucket.domain.bucketlist.BucketList;
 import dyveloper.awesomebucket.domain.user.User;
+import lombok.Getter;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.List;
 
 import static javax.persistence.FetchType.LAZY;
 
+@Getter
 @Entity
 public class Category extends BaseEntity {  // 카테고리
 

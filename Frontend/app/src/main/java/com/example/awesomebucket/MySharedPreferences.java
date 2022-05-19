@@ -1,5 +1,7 @@
 package com.example.awesomebucket;
 
+import static com.example.awesomebucket.MyConstant.NO_LOGIN_USER_ID;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -20,7 +22,7 @@ public class MySharedPreferences {
     // 로그인 한 사용자 번호 검색
     public static Long getLoginUserId(Context context, String filename, String key) {
         SharedPreferences sharedPref = getPreferences(filename, context);
-        return sharedPref.getLong(key, -1);
+        return sharedPref.getLong(key, NO_LOGIN_USER_ID);
     }
 
     // 파일 내 모든 환경 설정 값 제거
