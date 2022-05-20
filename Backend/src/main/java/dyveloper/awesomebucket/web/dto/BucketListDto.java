@@ -20,6 +20,7 @@ public class BucketListDto {
         private int importance;  // 중요도
         private int achievementRate;  // 달성률
         private LocalDate targetDate;  // 목표일
+        private String categoryName;  // 카테고리명
     }
 
 }

@@ -67,8 +67,9 @@ public class MainActivity<T> extends AppCompatActivity {
     Spinner ctgrSpn, sortSpn;
     ArrayList<String> cSList, sSList;
     ArrayAdapter<String> cSAdapter, sSAdapter;
+    ArrayList<BucketListDto.FindResponseDto> bucketListAll;  // 불러온 버킷리스트 목록
 
-    ArrayList<MainRecyclerVItem> List;
+    ArrayList<MainRecyclerVItem> List = new ArrayList<>();
     MainRecyclerVAdapter mainRecyclerVAdapter;
     RecyclerView mRecyclerView;
     RecyclerView.LayoutManager mLayoutManager;
@@ -80,7 +81,7 @@ public class MainActivity<T> extends AppCompatActivity {
 
     String title, target_date;
     String bucketName, d_day, dDay;
-    String sltCtgr;
+    String seletedCategoryName;  // 카테고리 필터 스피너에서 선택 된 카테고리 이름
     int category_num, sltCtgr_flag = 0;
     int achievement_rate, category_number;
     float importance;
@@ -109,6 +110,14 @@ public class MainActivity<T> extends AppCompatActivity {
 
         // 로그인 한 User의 기본키 조회
         loginUserId = MySharedPreferences.getLoginUserId(getApplicationContext(), PREFERENCE_FILE_USER, "loginUserId");
+
+        // 버킷리스트 목록 불러오기
+        try {
+            validateLoginState();  // 로그인 상태 확인
+            bucketListAll = loadBucketList();
+        } catch (UnauthorizedAccessException e) {
+            e.getMessage();
+        }
 
         //**************************** Table에 초기 데이터 넣기 ********************************
         try {
@@ -157,8 +166,7 @@ public class MainActivity<T> extends AppCompatActivity {
 
         // 카테고리 불러오기
         try {
-            if (loginUserId == NO_LOGIN_USER_ID)  // 인증되지 않은 사용자가 접근
-                throw new UnauthorizedAccessException("로그인이 필요합니다");
+            validateLoginState();  // 로그인 상태 확인
 
             categoryAPIService = client.create(CategoryApiService.class);
             Call<ResultDto> call = categoryAPIService.getCategories(loginUserId);
@@ -234,103 +242,22 @@ public class MainActivity<T> extends AppCompatActivity {
         ctgrSpn.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                sltCtgr = cSList.get(position);  // 선택된 item의 position의 값 저장
+                seletedCategoryName = cSList.get(position);  // 선택된 item의 position의 값 저장
+                List = new ArrayList<>();
 
-                // RecyclerView에 표시할 데이터 리스트 생성 및 BucketInfo() 함수를 호출하여 값 넣기
-                if ((cSList.get(position)).equals("전체")) {  // 전체를 선택했을 경우
-                    List = new ArrayList<>();
-
-                    // 카테고리 불러오기
-                    try {
-                        if (loginUserId == NO_LOGIN_USER_ID)  // 인증되지 않은 사용자가 접근
-                            throw new UnauthorizedAccessException("로그인이 필요합니다");
-
-                        bucketListApiService = client.create(BucketListApiService.class);
-                        Call<ResultDto> call = bucketListApiService.getBucketLists(loginUserId);
-                        call.enqueue(new Callback<ResultDto>() {
-                            @Override
-                            public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
-                                ResultDto result = response.body();  // 응답 결과 바디
-
-                                if (result != null && response.isSuccessful()) {
-                                    ArrayList resultData = (ArrayList) result.getData();// 응답 데이터
-
-                                    // 응답 데이터를 ResponseDto로 convert
-                                    ArrayList<BucketListDto.FindResponseDto> bucketLists = new ArrayList<>();
-                                    for (Object resultDatum : resultData)
-                                        bucketLists.add(new Gson().fromJson(new Gson().toJson(resultDatum), BucketListDto.FindResponseDto.class));
-
-                                    getBucketInfo(bucketLists);
-
-                                    Log.i("Load BucketList", "SUCCESS");
-
-                                } else {  // 버킷리스트 로드 실패
-                                    Log.i("Load BucketList", "FAIL");
-                                    Log.e("Response error", response.toString());
-
-                                    try {
-                                        // 에러 바디를 ErrorResultDto로 convert
-                                        Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
-                                        ErrorResultDto error = null;
-                                        error = errorConverter.convert(response.errorBody());
-
-                                        Log.e("ErrorResultDto", error.toString());
-
-                                        int errorStatus = error.getStatus();  // 에러 상태
-                                        String errorMessage = error.getMessage();  // 에러 메시지
-
-                                        if (errorMessage != null) {  // 개발자가 설정한 오류
-                                            PrintToast(errorMessage);  // 에러 메시지 출력
-                                            if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
-                                                logout();
-                                            }
-                                        } else {  // 기타 오류
-                                            if (errorStatus >= 500) {  // 서버 오류
-                                                PrintToast("Server Error");
-                                            } else if (errorStatus >= 400) {  // 클라이언트 오류
-                                                PrintToast("Client Error");
-                                            }
-                                        }
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-
-                            }
-
-                            @Override
-                            public void onFailure(Call<ResultDto> call, Throwable t) {
-                                Log.e("Throwable error", t.getMessage());
-                            }
-                        });
-                    } catch (UnauthorizedAccessException e) {  // 인증되지 않은 사용자가 접근할 때 발생하는 예외
-                        PrintToast(e.getMessage());  // 에러 메시지 출력
-                        logout();
-                    }
-
+                // 선택한 카테고리의 버킷리스트만 RecyclerView 항목에 추가
+                if ((seletedCategoryName).equals("전체")) {  // 전체를 선택했을 경우
+                    addRecyclerViewItemList(bucketListAll);
                 } else {  // 카테고리 중 하나를 선택 했을 경우
-                    List = new ArrayList<>();
-
-                    sqlDB = myDBHelper.getReadableDatabase();  // 읽기용 DB 열기
-                    Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-                    // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-                    cursor = sqlDB.rawQuery("SELECT category_number FROM category WHERE category_name= '" + cSList.get(position) + "';", null);
-
-                    while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
-                        category_number = cursor.getInt(0);
+                    ArrayList<BucketListDto.FindResponseDto> bucketListByCategory = new ArrayList<>();
+                    for (BucketListDto.FindResponseDto findResponseDto : bucketListAll) {
+                        if ((findResponseDto.getCategoryName()).equals(seletedCategoryName))
+                            bucketListByCategory.add(findResponseDto);
                     }
-                    cursor.close();  // cursor 닫기
-
-                    // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-                    cursor = sqlDB.rawQuery("SELECT title, achievement_rate, importance, target_date FROM bucket WHERE category_number = " + category_number + ";", null);
-
-                    BucketInfo(cursor);  // BucketInfo() 함수 호출
-
-                    cursor.close();  // cursor 닫기
-                    sqlDB.close();  // DB 닫기
+                    addRecyclerViewItemList(bucketListByCategory);
                 }
-                sortSpn.setAdapter(sSAdapter);  // spinner 객체에 ArrayAdapter 적용
 
+                sortSpn.setAdapter(sSAdapter);  // spinner 객체에 ArrayAdapter 적용
 
                 // RecyclerView의 어댑터로 설정
                 mainRecyclerVAdapter = new MainRecyclerVAdapter(List, getApplicationContext());   // MainRecyclerVAdapter List 넣기
@@ -527,6 +454,93 @@ public class MainActivity<T> extends AppCompatActivity {
     }
 
 
+    //**************************** 서버에서 버킷리스트를 불러오는 loadBucketList() 함수 정의 ********************************
+    public ArrayList<BucketListDto.FindResponseDto> loadBucketList() {
+        ArrayList<BucketListDto.FindResponseDto> bucketLists = new ArrayList<>();
+
+        bucketListApiService = client.create(BucketListApiService.class);
+        Call<ResultDto> call = bucketListApiService.getBucketLists(loginUserId);
+        call.enqueue(new Callback<ResultDto>() {
+            @Override
+            public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
+                ResultDto result = response.body();  // 응답 결과 바디
+
+                if (result != null && response.isSuccessful()) {
+                    ArrayList resultData = (ArrayList) result.getData();// 응답 데이터
+
+                    // 응답 데이터를 ResponseDto로 convert
+                    for (Object resultDatum : resultData)
+                        bucketLists.add(new Gson().fromJson(new Gson().toJson(resultDatum), BucketListDto.FindResponseDto.class));
+
+                    Log.i("Load BucketList", "SUCCESS");
+
+                } else {  // 버킷리스트 로드 실패
+                    Log.i("Load BucketList", "FAIL");
+                    Log.e("Response error", response.toString());
+
+                    try {
+                        // 에러 바디를 ErrorResultDto로 convert
+                        Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                        ErrorResultDto error = null;
+                        error = errorConverter.convert(response.errorBody());
+
+                        Log.e("ErrorResultDto", error.toString());
+
+                        int errorStatus = error.getStatus();  // 에러 상태
+                        String errorMessage = error.getMessage();  // 에러 메시지
+
+                        if (errorMessage != null) {  // 개발자가 설정한 오류
+                            PrintToast(errorMessage);  // 에러 메시지 출력
+                            if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
+                                logout();
+                            }
+                        } else {  // 기타 오류
+                            if (errorStatus >= 500) {  // 서버 오류
+                                PrintToast("Server Error");
+                            } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                PrintToast("Client Error");
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResultDto> call, Throwable t) {
+                Log.e("Throwable error", t.getMessage());
+            }
+        });
+        return bucketLists;
+    }
+
+
+    //**************************** RecyclerView 항목에 버킷리스트 데이터를 추가하기 위한 addRecyclerViewItemList() 함수 정의 ********************************
+    public void addRecyclerViewItemList(ArrayList<BucketListDto.FindResponseDto> bucketLists) {
+        for (BucketListDto.FindResponseDto bucketList : bucketLists) {
+            title = bucketList.getTitle();
+            achievement_rate = bucketList.getAchievementRate();
+            importance = (float) bucketList.getImportance();
+            target_date = bucketList.getTargetDate();
+            d_day = calDate(target_date);  // 디데이 계산 함수
+
+            if (achievement_rate == 100)
+                List.add(new MainRecyclerVItem(title, achievement_rate, achievement_rate + "%", importance, d_day, true));  // ArrayList 값 넣기
+            else
+                List.add(new MainRecyclerVItem(title, achievement_rate, achievement_rate + "%", importance, d_day, false));  // ArrayList 값 넣기
+        }
+        setInstructionVisibility(bucketLists);  // 안내 텍스트 가시성 설정
+    }
+
+
+    //**************************** 로그인되어있나 확인하는 validateLoginState() 함수 정의 ********************************
+    public void validateLoginState() throws UnauthorizedAccessException {
+        if (loginUserId == NO_LOGIN_USER_ID)
+            throw new UnauthorizedAccessException("로그인이 필요합니다");
+    }
+
+
     //**************************** 로그아웃을 위한 logout() 함수 정의 ********************************
     public void logout() {
         // SharedPreferences에서 로그인한 User ID 제거
@@ -599,25 +613,6 @@ public class MainActivity<T> extends AppCompatActivity {
             else
                 List.add(new MainRecyclerVItem(title, achievement_rate, achievement_rate + "%", importance, d_day, false));  // ArrayList 값 넣기
         }
-    }
-
-
-    //**************************** 버킷리스트를 불러오기 위한 getBucketInfo() 함수 정의 ********************************
-    // RecyclerView 항목에 데이터 추가
-    public void getBucketInfo(ArrayList<BucketListDto.FindResponseDto> bucketLists) {
-        for (BucketListDto.FindResponseDto bucketList : bucketLists) {
-            title = bucketList.getTitle();
-            achievement_rate = bucketList.getAchievementRate();
-            importance = (float) bucketList.getImportance();
-            target_date = bucketList.getTargetDate();
-            d_day = calDate(target_date);  // 디데이 계산 함수
-
-            if (achievement_rate == 100)
-                List.add(new MainRecyclerVItem(title, achievement_rate, achievement_rate + "%", importance, d_day, true));  // ArrayList 값 넣기
-            else
-                List.add(new MainRecyclerVItem(title, achievement_rate, achievement_rate + "%", importance, d_day, false));  // ArrayList 값 넣기
-        }
-        setInstructionVisibility(bucketLists);  // 안내 텍스트 가시성 설정
     }
 
 

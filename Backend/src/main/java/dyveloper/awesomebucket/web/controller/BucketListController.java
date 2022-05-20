@@ -35,7 +35,7 @@ public class BucketListController {
             List<BucketListDto.FindResponseDto> data = new ArrayList<>();
 
             for (BucketList bucket : bucketList)
-                data.add(new BucketListDto.FindResponseDto(bucket.getId(), bucket.getTitle(), bucket.getImportance(), bucket.getAchievementRate(), bucket.getTargetDate()));
+                data.add(new BucketListDto.FindResponseDto(bucket.getId(), bucket.getTitle(), bucket.getImportance(), bucket.getAchievementRate(), bucket.getTargetDate(), bucket.getCategory().getName()));
 
             return new ResponseEntity<>(new ResultDto(200, "Load BucketList", data), HttpStatus.OK);
 
