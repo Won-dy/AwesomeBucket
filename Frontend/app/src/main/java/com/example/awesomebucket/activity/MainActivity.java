@@ -4,7 +4,6 @@ import static com.example.awesomebucket.MyConstant.NO_LOGIN_USER_ID;
 import static com.example.awesomebucket.MyConstant.PREFERENCE_FILE_USER;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
@@ -82,10 +81,13 @@ public class MainActivity<T> extends AppCompatActivity {
     String title, target_date;
     String bucketName, d_day, dDay;
     String seletedCategoryName;  // 카테고리 필터 스피너에서 선택 된 카테고리 이름
+    String seletedSorting;  // 정렬 필터 스피너에서 선택된 정렬 기준
+    boolean isMultipleFiltering;  // 다중 필터링 여부
     int category_num, sltCtgr_flag = 0;
     int achievement_rate, category_number;
     float importance;
     long pressedTime = 0; //'뒤로가기' 버튼 클릭했을 때의 시간
+    long start, end; // 함수 실행시간 측정을 위한 변수
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,14 +112,6 @@ public class MainActivity<T> extends AppCompatActivity {
 
         // 로그인 한 User의 기본키 조회
         loginUserId = MySharedPreferences.getLoginUserId(getApplicationContext(), PREFERENCE_FILE_USER, "loginUserId");
-
-        // 버킷리스트 목록 불러오기
-        try {
-            validateLoginState();  // 로그인 상태 확인
-            bucketListAll = loadBucketList();
-        } catch (UnauthorizedAccessException e) {
-            e.getMessage();
-        }
 
         //**************************** Table에 초기 데이터 넣기 ********************************
         try {
@@ -243,25 +237,7 @@ public class MainActivity<T> extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 seletedCategoryName = cSList.get(position);  // 선택된 item의 position의 값 저장
-                List = new ArrayList<>();
-
-                // 선택한 카테고리의 버킷리스트만 RecyclerView 항목에 추가
-                if ((seletedCategoryName).equals("전체")) {  // 전체를 선택했을 경우
-                    addRecyclerViewItemList(bucketListAll);
-                } else {  // 카테고리 중 하나를 선택 했을 경우
-                    ArrayList<BucketListDto.FindResponseDto> bucketListByCategory = new ArrayList<>();
-                    for (BucketListDto.FindResponseDto findResponseDto : bucketListAll) {
-                        if ((findResponseDto.getCategoryName()).equals(seletedCategoryName))
-                            bucketListByCategory.add(findResponseDto);
-                    }
-                    addRecyclerViewItemList(bucketListByCategory);
-                }
-
-                sortSpn.setAdapter(sSAdapter);  // spinner 객체에 ArrayAdapter 적용
-
-                // RecyclerView의 어댑터로 설정
-                mainRecyclerVAdapter = new MainRecyclerVAdapter(List, getApplicationContext());   // MainRecyclerVAdapter List 넣기
-                mRecyclerView.setAdapter(mainRecyclerVAdapter);  //  RecyclerView 객체에 MainRecyclerVAdapter 적용
+                sortSpn.setAdapter(sSAdapter);  // spinner 객체에 ArrayAdapter 재적용
             }
 
             @Override
@@ -290,68 +266,58 @@ public class MainActivity<T> extends AppCompatActivity {
         sortSpn.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-/*
-                // 다중 정렬을 위해
-                sqlDB = myDBHelper.getReadableDatabase();  // 읽기용 DB 열기
+                try {
+                    validateLoginState();  // 로그인 상태 확인
+                    start = System.currentTimeMillis();
 
-                Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-                // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-                cursor = sqlDB.rawQuery("SELECT category_number FROM category WHERE category_name= '" + sltCtgr + "';", null);
-
-                if (cursor.getCount() == 0) {  // 전체를 선택했을 경우
-                    sltCtgr_flag = 0;
-                    cursor.close();  // cursor 닫기
-                } else {  // 카테고리 중 하나를 선택 했을 경우
-                    sltCtgr_flag = 1;
-                    while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
-                        category_num = cursor.getInt(0);  // 카테고리 번호 얻어오기
+                    seletedSorting = sSList.get(position);  // 선택된 item의 position의 값 저장
+                    if (seletedCategoryName == null) return;
+                    if (seletedCategoryName.equals("전체")) { // 전체를 선택했을 경우
+                        isMultipleFiltering = false;
+                    } else {  // 카테고리 중 하나를 선택 했을 경우
+                        isMultipleFiltering = true;
                     }
-                    cursor.close();  // cursor 닫기
+                    // 정렬 기준 명시적으로 구분
+                    if (seletedSorting.equals("최초 등록순")) {
+                        if (isMultipleFiltering)
+                            bucketListAll = loadBucketList("registeredDate", "ASC", seletedCategoryName);  // 카테고리별 정렬
+                        else
+                            bucketListAll = loadBucketList("registeredDate", "ASC", null);  // 전체 정렬
+                    } else if (seletedSorting.equals("최근 등록순")) {
+                        if (isMultipleFiltering)
+                            bucketListAll = loadBucketList("registeredDate", "DESC", seletedCategoryName);  // 카테고리별 정렬
+                        else
+                            bucketListAll = loadBucketList("registeredDate", "DESC", null);  // 전체 정렬
+                    } else if (seletedSorting.equals("중요도 높은순")) {
+                        if (isMultipleFiltering)
+                            bucketListAll = loadBucketList("importance", "DESC", seletedCategoryName);  // 카테고리별 정렬
+                        else bucketListAll = loadBucketList("importance", "DESC", null);  // 전체 정렬
+                    } else if (seletedSorting.equals("중요도 낮은순")) {
+                        if (isMultipleFiltering)
+                            bucketListAll = loadBucketList("importance", "ASC", seletedCategoryName);  // 카테고리별 정렬
+                        else bucketListAll = loadBucketList("importance", "ASC", null);  // 전체 정렬
+                    } else if (seletedSorting.equals("달성률 높은순")) {
+                        if (isMultipleFiltering)
+                            bucketListAll = loadBucketList("achievementRate", "DESC", seletedCategoryName);  // 카테고리별 정렬
+                        else
+                            bucketListAll = loadBucketList("achievementRate", "DESC", null);  // 전체 정렬
+                    } else if (seletedSorting.equals("달성률 낮은순")) {
+                        if (isMultipleFiltering)
+                            bucketListAll = loadBucketList("achievementRate", "ASC", seletedCategoryName);  // 카테고리별 정렬
+                        else
+                            bucketListAll = loadBucketList("achievementRate", "ASC", null);  // 전체 정렬
+                    }
+                    addRecyclerViewItemList(bucketListAll);  // RecyclerView 항목에 버킷리스트 데이터를 추가
+                    setInstructionVisibility(bucketListAll);  // 안내 텍스트 가시성 설정
+
+                } catch (UnauthorizedAccessException e) {  // 인증되지 않은 사용자가 접근할 때 발생하는 예외
+                    PrintToast(e.getMessage());  // 에러 메시지 출력
+                    logout();
+                } finally {
+                    // RecyclerView의 어댑터로 설정
+                    mainRecyclerVAdapter = new MainRecyclerVAdapter(List, getApplicationContext());   // MainRecyclerVAdapter List 넣기
+                    mRecyclerView.setAdapter(mainRecyclerVAdapter);  //  RecyclerView 객체에 MainRecyclerVAdapter 적용
                 }
-
-                sqlDB.close();  // DB 닫기
-
-                switch (position) {  // spinner의 선택된 item의 position 값 판별 후 sortBucket() 함수 호출하여 정렬
-                    case 0:  // 최초 등록순
-                        if (sltCtgr_flag == 0)
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket ORDER BY bucket_number ASC;");
-                        else
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket WHERE category_number = " + category_num + " ORDER BY bucket_number ASC;");
-                        break;
-                    case 1:  // 최근 등록순
-                        if (sltCtgr_flag == 0)
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket ORDER BY bucket_number DESC;");
-                        else
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket WHERE category_number = " + category_num + " ORDER BY bucket_number DESC;");
-                        break;
-                    case 2:  // 중요도 높은순
-                        if (sltCtgr_flag == 0)
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket ORDER BY importance DESC;");
-                        else
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket WHERE category_number = " + category_num + " ORDER BY importance DESC;");
-                        break;
-                    case 3:  // 중요도 낮은순
-                        if (sltCtgr_flag == 0)
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket ORDER BY importance ASC;");
-                        else
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket WHERE category_number = " + category_num + " ORDER BY importance ASC;");
-                        break;
-                    case 4:  // 달성률 높은순
-                        if (sltCtgr_flag == 0)
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket ORDER BY achievement_rate DESC;");
-                        else
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket WHERE category_number = " + category_num + " ORDER BY achievement_rate DESC;");
-                        break;
-                    case 5:  // 달성률 낮은순
-                        if (sltCtgr_flag == 0)
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket ORDER BY achievement_rate ASC;");
-                        else
-                            sortBucket("SELECT title, achievement_rate, importance, target_date FROM bucket WHERE category_number = " + category_num + " ORDER BY achievement_rate ASC;");
-                        break;
-                }*/
-                // RecyclerView의 어댑터로 설정
-                mainRecyclerVAdapter = new MainRecyclerVAdapter(List, getApplicationContext());   // MainRecyclerVAdapter List 넣기
-                mRecyclerView.setAdapter(mainRecyclerVAdapter);  //  RecyclerView 객체에 MainRecyclerVAdapter 적용
             }
 
             @Override
@@ -455,69 +421,74 @@ public class MainActivity<T> extends AppCompatActivity {
 
 
     //**************************** 서버에서 버킷리스트를 불러오는 loadBucketList() 함수 정의 ********************************
-    public ArrayList<BucketListDto.FindResponseDto> loadBucketList() {
+    public ArrayList<BucketListDto.FindResponseDto> loadBucketList(String sort, String direction, String categoryName) {
         ArrayList<BucketListDto.FindResponseDto> bucketLists = new ArrayList<>();
+        try {
+            bucketListApiService = client.create(BucketListApiService.class);
+            Call<ResultDto> call = bucketListApiService.getBucketLists(loginUserId, sort, direction, categoryName);
 
-        bucketListApiService = client.create(BucketListApiService.class);
-        Call<ResultDto> call = bucketListApiService.getBucketLists(loginUserId);
-        call.enqueue(new Callback<ResultDto>() {
-            @Override
-            public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
-                ResultDto result = response.body();  // 응답 결과 바디
-
-                if (result != null && response.isSuccessful()) {
-                    ArrayList resultData = (ArrayList) result.getData();// 응답 데이터
-
-                    // 응답 데이터를 ResponseDto로 convert
-                    for (Object resultDatum : resultData)
-                        bucketLists.add(new Gson().fromJson(new Gson().toJson(resultDatum), BucketListDto.FindResponseDto.class));
-
-                    Log.i("Load BucketList", "SUCCESS");
-
-                } else {  // 버킷리스트 로드 실패
-                    Log.i("Load BucketList", "FAIL");
-                    Log.e("Response error", response.toString());
-
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
                     try {
-                        // 에러 바디를 ErrorResultDto로 convert
-                        Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
-                        ErrorResultDto error = null;
-                        error = errorConverter.convert(response.errorBody());
+                        Response<ResultDto> response = call.execute();
+                        ResultDto result = response.body();
 
-                        Log.e("ErrorResultDto", error.toString());
+                        if (result != null && response.isSuccessful()) {
+                            ArrayList resultData = (ArrayList) result.getData();// 응답 데이터
 
-                        int errorStatus = error.getStatus();  // 에러 상태
-                        String errorMessage = error.getMessage();  // 에러 메시지
+                            // 응답 데이터를 ResponseDto로 convert
+                            for (Object resultDatum : resultData)
+                                bucketLists.add(new Gson().fromJson(new Gson().toJson(resultDatum), BucketListDto.FindResponseDto.class));
 
-                        if (errorMessage != null) {  // 개발자가 설정한 오류
-                            PrintToast(errorMessage);  // 에러 메시지 출력
-                            if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
-                                logout();
-                            }
-                        } else {  // 기타 오류
-                            if (errorStatus >= 500) {  // 서버 오류
-                                PrintToast("Server Error");
-                            } else if (errorStatus >= 400) {  // 클라이언트 오류
-                                PrintToast("Client Error");
+                            Log.i("Load BucketList", "SUCCESS");
+
+                        } else {  // 버킷리스트 로드 실패
+                            Log.i("Load BucketList", "FAIL");
+                            Log.e("Response error", response.toString());
+
+                            // 에러 바디를 ErrorResultDto로 convert
+                            Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                            ErrorResultDto error = null;
+                            error = errorConverter.convert(response.errorBody());
+
+                            Log.e("ErrorResultDto", error.toString());
+
+                            int errorStatus = error.getStatus();  // 에러 상태
+                            String errorMessage = error.getMessage();  // 에러 메시지
+
+                            if (errorMessage != null) {  // 개발자가 설정한 오류
+                                PrintToast(errorMessage);  // 에러 메시지 출력
+                                if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
+                                    logout();
+                                }
+                            } else {  // 기타 오류
+                                if (errorStatus >= 500) {  // 서버 오류
+                                    PrintToast("Server Error");
+                                } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                    PrintToast("Client Error");
+                                }
                             }
                         }
                     } catch (IOException e) {
+                        Log.e("Throwable error", e.getMessage());
                         e.printStackTrace();
                     }
                 }
-            }
+            }).start();
+            end = System.currentTimeMillis();
+            Thread.sleep((end - start) * 100);
 
-            @Override
-            public void onFailure(Call<ResultDto> call, Throwable t) {
-                Log.e("Throwable error", t.getMessage());
-            }
-        });
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return bucketLists;
     }
 
 
     //**************************** RecyclerView 항목에 버킷리스트 데이터를 추가하기 위한 addRecyclerViewItemList() 함수 정의 ********************************
     public void addRecyclerViewItemList(ArrayList<BucketListDto.FindResponseDto> bucketLists) {
+        List = new ArrayList<>();
         for (BucketListDto.FindResponseDto bucketList : bucketLists) {
             title = bucketList.getTitle();
             achievement_rate = bucketList.getAchievementRate();
@@ -530,7 +501,6 @@ public class MainActivity<T> extends AppCompatActivity {
             else
                 List.add(new MainRecyclerVItem(title, achievement_rate, achievement_rate + "%", importance, d_day, false));  // ArrayList 값 넣기
         }
-        setInstructionVisibility(bucketLists);  // 안내 텍스트 가시성 설정
     }
 
 
@@ -595,38 +565,6 @@ public class MainActivity<T> extends AppCompatActivity {
             e.printStackTrace();  // 에러 메세지의 발생 근원지를 찾아 단계별로 에러 출력
             return "fail";
         }
-    }
-
-
-    //**************************** 버킷리스트를 불러오기 위한 BucketInfo() 함수 정의 ********************************
-    // RecyclerView에 표시할 데이터 리스트에 조회된 data set 값을 넣고, 그 데이터 리스트를 List에 넣기
-    public void BucketInfo(Cursor cursor) {
-        while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
-            title = cursor.getString(0);
-            achievement_rate = cursor.getInt(1);
-            importance = cursor.getInt(2);
-            target_date = cursor.getString(3);
-            d_day = calDate(target_date);  // 디데이 계산 함수
-
-            if (achievement_rate == 100)
-                List.add(new MainRecyclerVItem(title, achievement_rate, achievement_rate + "%", importance, d_day, true));  // ArrayList 값 넣기
-            else
-                List.add(new MainRecyclerVItem(title, achievement_rate, achievement_rate + "%", importance, d_day, false));  // ArrayList 값 넣기
-        }
-    }
-
-
-    //**************************** 정렬을 위한 sortBucket() 함수 정의 ********************************
-    // 쿼리문을 받아와 BucketInfo() 함수를 호출하여 정렬
-    public void sortBucket(String sqlstmt) {
-        List = new ArrayList<>();  // ArrayList 생성
-        sqlDB = myDBHelper.getReadableDatabase();
-        Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-        // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-        cursor = sqlDB.rawQuery(sqlstmt, null);
-        BucketInfo(cursor);  // BucketInfo() 함수 호출
-        cursor.close();
-        sqlDB.close();
     }
 
 
