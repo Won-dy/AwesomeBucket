@@ -8,7 +8,7 @@ public class MainRecyclerVItem {  // 하나의 행에 대한 정보를 담을 �
     public String dDay;
     boolean fin;  // 달성 여부
 
-    public MainRecyclerVItem(String bucketName, int pB, String achvRate, float rB, String dDay, boolean fin){
+    public MainRecyclerVItem(String bucketName, int pB, String achvRate, float rB, String dDay, boolean fin) {
         this.bucketName = bucketName;
         this.pB = pB;
         this.achvRate = achvRate;

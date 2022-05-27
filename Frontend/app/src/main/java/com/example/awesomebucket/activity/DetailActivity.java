@@ -63,8 +63,8 @@ public class DetailActivity extends AppCompatActivity {
 
         // toast.xml을 View로서 inflating하고 뷰 참조 후 뷰 객체 변수에 인플레이팅된 뷰를 할당
         toast = new Toast(DetailActivity.this);
-        toastView = (View)View.inflate(DetailActivity.this, R.layout.toast, null);
-        toastTv = (TextView)toastView.findViewById(R.id.toastTv);
+        toastView = (View) View.inflate(DetailActivity.this, R.layout.toast, null);
+        toastTv = (TextView) toastView.findViewById(R.id.toastTv);
 
         // MainActivity로 부터 intent를 통해 데이터 값을 전달 받음
         Intent inIntent = getIntent();  // bucketName, dDay 값 받기
@@ -80,7 +80,7 @@ public class DetailActivity extends AppCompatActivity {
         // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
         cursor = sqlDB.rawQuery("SELECT * FROM bucket WHERE title = '" + title + "';", null);
 
-        while(cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
+        while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
             category_number = cursor.getInt(2);
             importance = cursor.getInt(3);
             achievement_rate = cursor.getInt(4);
@@ -94,7 +94,7 @@ public class DetailActivity extends AppCompatActivity {
         // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
         cursor = sqlDB.rawQuery("SELECT category_name FROM category WHERE category_number = " + category_number + ";", null);
 
-        while(cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
+        while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
             category_name = cursor.getString(0);
         }
         cursor.close();  // cursor 닫기
@@ -118,8 +118,8 @@ public class DetailActivity extends AppCompatActivity {
             achvdtTv.setText("달성일 [" + completion_date + "]");
 
         // 달성 했으면 버킷리스트 명 흐리게 표시
-        if(achievement_rate==100) {
-            bName.setTextColor(Color.argb(255,255,215,0));
+        if (achievement_rate == 100) {
+            bName.setTextColor(Color.argb(255, 255, 215, 0));
 
             Drawable progressDrawable = getResources().getDrawable(R.drawable.progressbar_custom_2);
             progressDrawable.setBounds(pBar.getProgressDrawable().getBounds());
@@ -201,14 +201,14 @@ public class DetailActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         //마지막으로 누른 '뒤로가기' 버튼 클릭 시간이 이전의 '뒤로가기' 버튼 클릭 시간과의 차이가 2초보다 크면
-        if(System.currentTimeMillis() > pressedTime + 2000){
+        if (System.currentTimeMillis() > pressedTime + 2000) {
             //현재 시간을 pressedTime 에 저장
             pressedTime = System.currentTimeMillis();
-            Toast.makeText(getApplicationContext(),"한번 더 누르면 앱이 종료됩니다.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "한번 더 누르면 앱이 종료됩니다.", Toast.LENGTH_SHORT).show();
         }
 
         //마지막 '뒤로가기' 버튼 클릭시간이 이전의 '뒤로가기' 버튼 클릭 시간과의 차이가 2초보다 작으면
-        else{
+        else {
             moveTaskToBack(true);  // 태스크를 백그라운드로 이동
             finishAndRemoveTask();  // 액티비티 종료 + 태스크 리스트에서 지우기
             android.os.Process.killProcess(android.os.Process.myPid());  // 앱 프로세스 종료

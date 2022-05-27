@@ -28,7 +28,7 @@ public class MainRecyclerVAdapter extends RecyclerView.Adapter<RecyclerView.View
         RatingBar rB;
 
         // 생성자
-        MyViewHolder(View view){
+        MyViewHolder(View view) {
             super(view);
             // findViewById() 메소드를 사용하여 view에 정의된 뷰를 inflation(객체화)하여 뷰 참조
             // 뷰 객체 변수에 인플레이팅된 뷰를 할당
@@ -43,8 +43,9 @@ public class MainRecyclerVAdapter extends RecyclerView.Adapter<RecyclerView.View
     // 생성자
     private ArrayList<MainRecyclerVItem> List;
     private Context context;
+
     // ArrayList<RecyclerViewItem> 객체를 전달 받음
-    MainRecyclerVAdapter(ArrayList<MainRecyclerVItem> List, Context context){
+    MainRecyclerVAdapter(ArrayList<MainRecyclerVItem> List, Context context) {
         this.List = List;
         this.context = context;
     }
@@ -73,9 +74,9 @@ public class MainRecyclerVAdapter extends RecyclerView.Adapter<RecyclerView.View
         myViewHolder.achvRate.setText(List.get(position).achvRate);
         myViewHolder.rB.setRating(List.get(position).rB);
 
-        if(List.get(position).fin) {
-            myViewHolder.bucketName.setTextColor(Color.argb(100,0,0,0));
-            myViewHolder.bucketName.setPaintFlags(myViewHolder.bucketName.getPaintFlags()| Paint.STRIKE_THRU_TEXT_FLAG);
+        if (List.get(position).fin) {
+            myViewHolder.bucketName.setTextColor(Color.argb(100, 0, 0, 0));
+            myViewHolder.bucketName.setPaintFlags(myViewHolder.bucketName.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
 
             Drawable progressDrawable = context.getResources().getDrawable(R.drawable.progressbar_custom_2);
             progressDrawable.setBounds(myViewHolder.pB.getProgressDrawable().getBounds());
@@ -83,9 +84,8 @@ public class MainRecyclerVAdapter extends RecyclerView.Adapter<RecyclerView.View
 
             myViewHolder.dDay.setText("달성");
             myViewHolder.dDay.setTextColor(Color.RED);
-        }
-        else if(!(List.get(position).fin))   {
-            myViewHolder.bucketName.setTextColor(Color.argb(255,0,0,0));
+        } else if (!(List.get(position).fin)) {
+            myViewHolder.bucketName.setTextColor(Color.argb(255, 0, 0, 0));
             myViewHolder.bucketName.setPaintFlags(0);
 
             Drawable progressDrawable = context.getResources().getDrawable(R.drawable.progressbar_custom);
@@ -93,7 +93,7 @@ public class MainRecyclerVAdapter extends RecyclerView.Adapter<RecyclerView.View
             myViewHolder.pB.setProgressDrawable(progressDrawable);
 
             myViewHolder.dDay.setText(List.get(position).dDay);
-            myViewHolder.dDay.setTextColor(Color.argb(255,62,112,174));
+            myViewHolder.dDay.setTextColor(Color.argb(255, 62, 112, 174));
         }
     }
 
