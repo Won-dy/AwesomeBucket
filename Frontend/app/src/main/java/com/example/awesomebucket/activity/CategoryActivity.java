@@ -1,8 +1,13 @@
 package com.example.awesomebucket.activity;
 
-import android.database.Cursor;
+import static com.example.awesomebucket.MyConstant.NO_LOGIN_USER_ID;
+import static com.example.awesomebucket.MyConstant.PREFERENCE_FILE_USER;
+
+import android.content.Context;
+import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -15,7 +20,26 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.awesomebucket.MyDBHelper;
+import com.example.awesomebucket.MySharedPreferences;
 import com.example.awesomebucket.R;
+import com.example.awesomebucket.api.APIClient;
+import com.example.awesomebucket.api.CategoryApiService;
+import com.example.awesomebucket.dto.CategoryDto;
+import com.example.awesomebucket.dto.ErrorResultDto;
+import com.example.awesomebucket.dto.ResultDto;
+import com.example.awesomebucket.exception.NoInputDataException;
+import com.example.awesomebucket.exception.UnauthorizedAccessException;
+import com.google.gson.Gson;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Converter;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class CategoryActivity extends AppCompatActivity {
 
@@ -29,6 +53,12 @@ public class CategoryActivity extends AppCompatActivity {
     TextView toastTv;
     Toast toast;
 
+    Retrofit client = APIClient.getClient();
+    CategoryApiService categoryApiService;
+
+    Context context;
+
+    Long loginUserId;
     String ctgr_name;
     long pressedTime = 0; //'뒤로가기' 버튼 클릭했을 때의 시간
     InputMethodManager imm;  // 키보드 숨기기 위해 객체 선언
@@ -47,19 +77,19 @@ public class CategoryActivity extends AppCompatActivity {
 
         // toast.xml을 View로서 inflating하고 뷰 참조 후 뷰 객체 변수에 인플레이팅된 뷰를 할당
         toast = new Toast(CategoryActivity.this);
-        toastView = (View)View.inflate(CategoryActivity.this, R.layout.toast, null);
-        toastTv = (TextView)toastView.findViewById(R.id.toastTv);
+        toastView = (View) View.inflate(CategoryActivity.this, R.layout.toast, null);
+        toastTv = (TextView) toastView.findViewById(R.id.toastTv);
+
+        // 로그인 한 User의 기본키 조회
+        loginUserId = MySharedPreferences.getLoginUserId(getApplicationContext(), PREFERENCE_FILE_USER, "loginUserId");
+        context = this;  // 컨텍스트 얻기
 
         // 입력받는 방법을 관리하는 Manager 객체를 요청하여 InputMethodmanager에 반환
         imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
 
         myDBHelper = new MyDBHelper(this);  // DB와 Table 생성 (MyDBHelper.java의 생성자, onCreate() 호출)
 
-        sqlDB = myDBHelper.getReadableDatabase();  // 읽기용 DB 열기
-        callCtgr();  // 카테고리 불러오기위해 callCtgr() 함수 호출
-        sqlDB.close();  // DB 닫기
-
-        listV.setAdapter(ctgrListVAdapter);  // ListView 객체에 CtgrListVAdapter 적용
+        loadCategory();  // 카테고리 불러오기위해 loadCategory() 함수 호출
 
         // 카테고리 추가 버튼을 클릭했을 때 동작하는 이벤트 처리
         ctgrAddBtn.setOnClickListener(new View.OnClickListener() {
@@ -107,17 +137,98 @@ public class CategoryActivity extends AppCompatActivity {
 
     }
 
-    //**************************** 카테고리를 불러오기 위한 callCtgr() 함수 정의 ********************************
-    public void callCtgr() {
-        Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-        // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-        cursor = sqlDB.rawQuery("SELECT category_name FROM category;", null);  // 카테고리 이름 검색
+    //**************************** 카테고리를 불러오기 위한 loadCategory() 함수 정의 ********************************
+    public void loadCategory() {
 
-        ctgrListVAdapter = new CtgrListVAdapter(this);  // CtgrListVAdapter 생성
-        while(cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
-            ctgrListVAdapter.addItem(cursor.getString(0));  // 카테고리 수만큼 항목 추가
+        // 카테고리 불러오기
+        try {
+            validateLoginState();  // 로그인 상태 확인
+
+            ctgrListVAdapter = new CtgrListVAdapter(context);  // CtgrListVAdapter 생성
+            categoryApiService = client.create(CategoryApiService.class);
+            Call<ResultDto> call = categoryApiService.getCategories(loginUserId);
+            call.enqueue(new Callback<ResultDto>() {
+                @Override
+                public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
+
+                    ResultDto result = response.body();  // 응답 결과 바디
+
+                    if (result != null && response.isSuccessful()) {
+                        ArrayList resultData = (ArrayList) result.getData();// 응답 데이터
+
+                        // 응답 데이터를 FindResponseDto로 convert
+                        ArrayList<CategoryDto.FindResponseDto> categories = new ArrayList<>();
+                        for (Object resultDatum : resultData)
+                            categories.add(new Gson().fromJson(new Gson().toJson(resultDatum), CategoryDto.FindResponseDto.class));
+
+                        // 카테고리 리스트에 값 넣기
+                        for (CategoryDto.FindResponseDto category : categories)
+                            ctgrListVAdapter.addItem(category.getId(), category.isDefault(), category.getName());
+
+                        Log.i("Load Category", "SUCCESS");
+
+                    } else {  // 카테고리 로드 실패
+                        Log.i("Load Category", "FAIL");
+                        Log.e("Response error", response.toString());
+
+                        try {
+                            // 에러 바디를 ErrorResultDto로 convert
+                            Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                            ErrorResultDto error = null;
+                            error = errorConverter.convert(response.errorBody());
+
+                            Log.e("ErrorResultDto", error.toString());
+
+                            int errorStatus = error.getStatus();  // 에러 상태
+                            String errorMessage = error.getMessage();  // 에러 메시지
+
+                            if (errorMessage != null) {  // 개발자가 설정한 오류
+                                PrintToast(errorMessage);  // 에러 메시지 출력
+                                if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
+                                    logout();
+                                }
+                            } else {  // 기타 오류
+                                if (errorStatus >= 500) {  // 서버 오류
+                                    PrintToast("Server Error");
+                                } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                    PrintToast("Client Error");
+                                }
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    listV.setAdapter(ctgrListVAdapter);  // ListView 객체에 CtgrListVAdapter 적용
+                }
+
+                @Override
+                public void onFailure(Call<ResultDto> call, Throwable t) {
+                    Log.e("Throwable error", t.getMessage());
+                }
+            });
+        } catch (UnauthorizedAccessException e) {  // 인증되지 않은 사용자가 접근할 때 발생하는 예외
+            PrintToast(e.getMessage());  // 에러 메시지 출력
+            logout();
         }
-        cursor.close();  // cursor 닫기
+    }
+
+
+    //**************************** 로그인되어있나 확인하는 validateLoginState() 함수 정의 ********************************
+    public void validateLoginState() throws UnauthorizedAccessException {
+        if (loginUserId == NO_LOGIN_USER_ID)
+            throw new UnauthorizedAccessException("로그인이 필요합니다");
+    }
+
+
+    //**************************** 로그아웃을 위한 logout() 함수 정의 ********************************
+    public void logout() {
+        // SharedPreferences에서 로그인한 User ID 제거
+        MySharedPreferences.removeOne(getApplicationContext(), PREFERENCE_FILE_USER, "loginUserId");
+
+        // 명시적 인텐트를 사용하여 LoginActivity 호출
+        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 
 

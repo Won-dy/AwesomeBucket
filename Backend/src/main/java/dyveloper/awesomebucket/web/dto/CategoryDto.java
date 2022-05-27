@@ -14,7 +14,7 @@ public class CategoryDto {
     @Getter
     @AllArgsConstructor
     public static class FindResponseDto {
-
+        private long id;  // 카테고리 ID
         private String name;  // 카테고리명
         private boolean isDefault;  // 디폴트 여부
 

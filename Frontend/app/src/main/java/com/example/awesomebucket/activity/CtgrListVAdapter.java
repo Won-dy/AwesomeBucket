@@ -95,7 +95,8 @@ public class CtgrListVAdapter extends BaseAdapter {  // 일반 클래스
         // 아이템 내 각 위젯에 데이터 반영
         ctgrName.setText(ctgrListVItem.getName());
 
-        if(ctgrName.getText().toString().equals("기타")) {
+        // 디폴트 카테고리는 수정, 삭제 불가
+        if (ctgrListVItem.isDefault()) {
             ctgrEditBtn.setVisibility(View.INVISIBLE);
             ctgrDltBtn.setVisibility(View.INVISIBLE);
         } else {
@@ -221,9 +222,11 @@ public class CtgrListVAdapter extends BaseAdapter {  // 일반 클래스
     }
 
     //**************************** 아이템 데이터 추가를 위한 함수 ********************************
-    public void addItem(String name) {
+    public void addItem(long id, boolean isDefault, String name) {
         CtgrListVItem item = new CtgrListVItem();  // CtgrListVItem 생성
         item.setName(name);  // CtgrListVItem에 아이템 setting
+        item.setId(id);
+        item.setDefault(isDefault);
         ctgrListVItems.add(item);  // ctgrListVItems에 item 추가
     }
 
@@ -237,7 +240,7 @@ public class CtgrListVAdapter extends BaseAdapter {  // 일반 클래스
 
         ctgrListVAdapter = new CtgrListVAdapter((CategoryActivity) context);  // CategoryActivity에 CtgrListVAdapter 생성
         while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
-            ctgrListVAdapter.addItem(cursor.getString(0));  // 카테고리 수만큼 항목 추가
+//            ctgrListVAdapter.addItem(cursor.getString(0));  // 카테고리 수만큼 항목 추가
         }
         cursor.close();  // cursor 닫기
         sqlDB.close();  // DB 닫기

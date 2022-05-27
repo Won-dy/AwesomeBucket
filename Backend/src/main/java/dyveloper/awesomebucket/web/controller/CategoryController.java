@@ -10,9 +10,7 @@ import dyveloper.awesomebucket.web.dto.ResultDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +34,7 @@ public class CategoryController {
             List<CategoryDto.FindResponseDto> data = new ArrayList<>();
 
             for (Category category : categories) {
-                data.add(new CategoryDto.FindResponseDto(category.getName(), category.isDefault()));
+                data.add(new CategoryDto.FindResponseDto(category.getId(), category.getName(), category.isDefault()));
             }
 
             return new ResponseEntity<>(new ResultDto(200, "Load Category", data), HttpStatus.OK);
@@ -44,6 +42,7 @@ public class CategoryController {
         } catch (UnauthorizedAccessException e) {  // DB에 없는 사용자가 임의 접근
             return new ResponseEntity<>(new ErrorResultDto(401, "Unauthorized Access", "로그인이 필요합니다"), HttpStatus.UNAUTHORIZED);
         }
+    }
 
     }
 }
