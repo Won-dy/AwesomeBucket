@@ -58,4 +58,20 @@ public class CategoryService {
         }
     }
 
+    // 카테고리 삭제
+    public int deleteCategory(User user, Long categoryId) {
+        Category deleteCategory = findById(categoryId);  // 삭제할 카테고리 조회
+        if (deleteCategory.isDefault()) {  // 삭제할 카테고리가 디폴트 카테고리이면
+            return 1;
+        }
+        if (deleteCategory.getUser() != user) {  // 삭제할 카테고리가 남의 카테고리이면
+            return 2;
+        }
+        // 카테고리 삭제
+        Category defaultCategory = categoryRepository.findByNameAndIsDefault("기타", true).orElse(null);  // 기타 카테고리 조회
+        deleteCategory.delete(user, defaultCategory);
+        categoryRepository.delete(deleteCategory);
+        return 0;
+    }
+
 }

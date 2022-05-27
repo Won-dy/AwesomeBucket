@@ -38,4 +38,11 @@ public class BucketList extends BaseEntity {  // 버킷리스트
     @JoinColumn(name = "category_id")
     private Category category;  // 카테고리
 
+
+    //==비즈니스 로직==//
+
+    // 카테고리 삭제시 기타 카테고리로 변경
+    public void setCategoryDefault(Category defaultCategory) {
+        this.category = defaultCategory;
+    }
 }

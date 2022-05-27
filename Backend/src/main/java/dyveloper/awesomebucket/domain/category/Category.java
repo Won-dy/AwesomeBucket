@@ -49,11 +49,23 @@ public class Category extends BaseEntity {  // 카테고리
         this.name = name;
     }
 
+    // 카테고리 삭제
+    public void delete(User user, Category defaultCategory) {
+        // 해당 카테고리를 가지고있는 버킷리스트의 카테고리를 기타 카테고리로 변경
+        for (BucketList bucketList : bucketLists) {
+            bucketList.setCategoryDefault(defaultCategory);
+        }
+        deleteFromUser(user);
+    }
 
     //== 연관관계 메서드 ==//
     public void setUser(User user) {
         this.user = user;
         user.getCategories().add(this);
+    }
+
+    public void deleteFromUser(User user) {
+        user.getCategories().remove(this);
     }
 
 

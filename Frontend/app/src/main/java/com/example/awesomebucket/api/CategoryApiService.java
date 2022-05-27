@@ -5,6 +5,7 @@ import com.example.awesomebucket.dto.ResultDto;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.PATCH;
 import retrofit2.http.POST;
@@ -24,4 +25,9 @@ public interface CategoryApiService {
     @PATCH("categories/{categoryId}")
     Call<ResultDto> updateCategory(@Path("categoryId") Long categoryId,
                                    @Body CategoryDto.CreateUpdateRequestDto createUpdateRequestDto);
+
+    // 카테고리 삭제 API
+    @DELETE("users/{userId}/categories/{categoryId}")
+    Call<ResultDto> deleteCategory(@Path("userId") Long userId,
+                                   @Path("categoryId") Long categoryId);
 }

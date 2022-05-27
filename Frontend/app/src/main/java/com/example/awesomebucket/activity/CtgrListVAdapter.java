@@ -2,8 +2,6 @@ package com.example.awesomebucket.activity;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +15,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
-import com.example.awesomebucket.MyDBHelper;
 import com.example.awesomebucket.R;
 import com.example.awesomebucket.api.APIClient;
 import com.example.awesomebucket.api.CategoryApiService;
@@ -41,9 +38,6 @@ import retrofit2.Retrofit;
 public class CtgrListVAdapter extends BaseAdapter {  // 일반 클래스
 
     // 변수 선언
-    MyDBHelper myDBHelper;
-    SQLiteDatabase sqlDB;
-
     Context context;
     ListView listV;
     CtgrListVAdapter ctgrListVAdapter;
@@ -57,7 +51,6 @@ public class CtgrListVAdapter extends BaseAdapter {  // 일반 클래스
 
     Long loginUserId;
     String getctgrName, getEditctgrName;
-    int ctgrNum;
 
     // 생성자
     public CtgrListVAdapter(Context _context) {
@@ -97,8 +90,6 @@ public class CtgrListVAdapter extends BaseAdapter {  // 일반 클래스
         toast = new Toast(context);
         toastView = (View) View.inflate(context, R.layout.toast, null);
         toastTv = (TextView) toastView.findViewById(R.id.toastTv);
-
-        myDBHelper = new MyDBHelper(context);  // DB와 Table 생성 (MyDBHelper.java의 생성자, onCreate() 호출)
 
         // "category_listview_item" Layout을 inflate하여 convertView 참조
         if (convertView == null) {
@@ -203,7 +194,7 @@ public class CtgrListVAdapter extends BaseAdapter {  // 일반 클래스
 
                                 @Override
                                 public void onFailure(Call<ResultDto> call, Throwable t) {
-
+                                    Log.e("Throwable error", t.getMessage());
                                 }
                             });
                         } catch (UnauthorizedAccessException e) {  // 인증되지 않은 사용자가 접근할 때 발생하는 예외
@@ -239,28 +230,61 @@ public class CtgrListVAdapter extends BaseAdapter {  // 일반 클래스
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         try {
-                            sqlDB = myDBHelper.getWritableDatabase();  // 읽고 쓰기용 DB 열기
-                            Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-                            // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-                            cursor = sqlDB.rawQuery("SELECT category_number FROM category WHERE category_name = '" + getctgrName + "';", null);
+                            ((CategoryActivity) context).validateLoginState();  // 로그인 상태 확인
 
-                            while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
-                                ctgrNum = Integer.parseInt(cursor.getString(0));  // category_number
-                            }
-                            cursor.close();  // cursor 닫기
+                            categoryApiService = client.create(CategoryApiService.class);
+                            Call<ResultDto> call = categoryApiService.deleteCategory(loginUserId, ctgrListVItem.getId());
+                            call.enqueue(new Callback<ResultDto>() {
+                                @Override
+                                public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
+                                    ResultDto result = response.body();  // 응답 결과 바디
 
-                            // 삭제된 카테고리를 가진 버킷의 카테고리를 기타로 변경하기 위해 UPDATE
-                            sqlDB.execSQL("UPDATE bucket SET category_number = 0 WHERE category_number = " + ctgrNum + ";");
+                                    if (result != null && response.isSuccessful()) {
+                                        Log.i("DELETE CATEGORY", "SUCCESS");
+                                        PrintToast("카테고리 삭제 : " + getctgrName);  // PrintToast() 함수 호출하여 토스트 메세지 출력
 
-                            // 카테고리 삭제를 위해 DELETE
-                            sqlDB.execSQL("DELETE FROM category WHERE category_name = '" + getctgrName + "';");
-                            sqlDB.close();  // DB 닫기
+                                        ((CategoryActivity) context).loadCategory();  // 카테고리 목록 갱신
+                                    } else {
+                                        try {
+                                            Log.i("DELETE CATEGORY", "FAIL");
+                                            Log.e("Response error", response.toString());
 
-                            recallCtgr();  // 카테고리 목록 갱신
+                                            // 에러 바디를 ErrorResultDto로 convert
+                                            Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                                            ErrorResultDto error = errorConverter.convert(response.errorBody());
 
-                            PrintToast("카테고리 삭제 : " + getctgrName);  // PrintToast() 함수 호출하여 토스트 메세지 출력
-                        } catch (Exception e) {
-                            PrintToast("삭제 실패");  // PrintToast() 함수 호출하여 토스트 메세지 출력
+                                            Log.e("ErrorResultDto", error.toString());
+
+                                            int errorStatus = error.getStatus();  // 에러 상태
+                                            String errorMessage = error.getMessage();  // 에러 메시지
+
+                                            // 로그인 실패
+                                            if (errorMessage != null) {  // 개발자가 설정한 오류
+                                                PrintToast(errorMessage);  // 에러 메시지 출력
+                                                if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
+                                                    ((CategoryActivity) context).logout();
+                                                }
+                                            } else {  // 기타 오류
+                                                if (errorStatus >= 500) {  // 서버 오류
+                                                    PrintToast("Server Error");
+                                                } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                                    PrintToast("Client Error");
+                                                }
+                                            }
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<ResultDto> call, Throwable t) {
+                                    Log.e("Throwable error", t.getMessage());
+                                }
+                            });
+                        } catch (UnauthorizedAccessException e) {  // 인증되지 않은 사용자가 접근할 때 발생하는 예외
+                            PrintToast(e.getMessage());  // 에러 메시지 출력
+                            ((CategoryActivity) context).logout();
                         }
                     }
                 });
@@ -286,23 +310,6 @@ public class CtgrListVAdapter extends BaseAdapter {  // 일반 클래스
         ctgrListVItems.add(item);  // ctgrListVItems에 item 추가
     }
 
-    //**************************** 카테고리 갱신을 위한 recallCtgr() 함수 정의 ********************************
-    public void recallCtgr() {
-        sqlDB = myDBHelper.getReadableDatabase();  // 읽기용 DB 열기
-
-        Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-        // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-        cursor = sqlDB.rawQuery("SELECT category_name FROM category;", null);  // 카테고리 이름 검색
-
-        ctgrListVAdapter = new CtgrListVAdapter((CategoryActivity) context);  // CategoryActivity에 CtgrListVAdapter 생성
-        while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
-//            ctgrListVAdapter.addItem(cursor.getString(0));  // 카테고리 수만큼 항목 추가
-        }
-        cursor.close();  // cursor 닫기
-        sqlDB.close();  // DB 닫기
-
-        listV.setAdapter(ctgrListVAdapter);  // ListView 객체에 CtgrListVAdapter 적용
-    }
 
     //**************************** 커스텀 토스트 메세지 출력을 위한 PrintToast() 함수 정의 ********************************
     public void PrintToast(String msg) {

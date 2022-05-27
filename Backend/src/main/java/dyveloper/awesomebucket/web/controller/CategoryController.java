@@ -92,4 +92,31 @@ public class CategoryController {
             return new ResponseEntity<>(new ErrorResultDto(400, "Category Already Exists", dre.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
+
+    /**
+     * 카테고리 삭제 API
+     */
+    @DeleteMapping("/users/{userId}/categories/{categoryId}")
+    public ResponseEntity deleteCategory(@PathVariable Long userId,
+                                         @PathVariable Long categoryId) {
+        try {
+            User user = userService.findLoginUserById(userId);  // 로그인 유저 확인
+            int result = categoryService.deleteCategory(user, categoryId);  // 카테고리 삭제
+
+            if (result == 0)   // 카테고리 삭제 성공
+                return new ResponseEntity<>(new ResultDto(200, "Delete Category Success"), HttpStatus.OK);
+
+            else if (result == 1)   // 디폴트 카테고리 삭제 시도
+                return new ResponseEntity<>(new ErrorResultDto(403, "Can't Delete Default Category", "기본 카테고리는 삭제할 수 없습니다"), HttpStatus.FORBIDDEN);
+
+            else  // 남의 카테고리 삭제 시도
+                return new ResponseEntity(new ErrorResultDto(403, "Can't Delete Category", "해당 카테고리의 삭제 권한이 없습니다"), HttpStatus.FORBIDDEN);
+
+        } catch (UnauthorizedAccessException e) {  // DB에 없는 사용자가 임의 접근
+            return new ResponseEntity<>(new ErrorResultDto(401, "Unauthorized Access", "로그인이 필요합니다"), HttpStatus.UNAUTHORIZED);
+        } catch (NotFoundResourceException nfre) {  // 존재하지 않는 카테고리
+            return new ResponseEntity<>(new ErrorResultDto(404, "Not Found Category", "존재하지 않는 카테고리입니다"), HttpStatus.NOT_FOUND);
+        }
+    }
+
 }
