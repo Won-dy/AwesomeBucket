@@ -5,7 +5,6 @@ import static com.example.awesomebucket.MyConstant.PREFERENCE_FILE_USER;
 
 import android.content.Context;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -19,7 +18,6 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.awesomebucket.MyDBHelper;
 import com.example.awesomebucket.MySharedPreferences;
 import com.example.awesomebucket.R;
 import com.example.awesomebucket.api.APIClient;
@@ -44,9 +42,6 @@ import retrofit2.Retrofit;
 public class CategoryActivity extends AppCompatActivity {
 
     // 변수 선언
-    MyDBHelper myDBHelper;
-    SQLiteDatabase sqlDB;
-
     ListView listV;
     CtgrListVAdapter ctgrListVAdapter;
     View toastView;
@@ -59,7 +54,7 @@ public class CategoryActivity extends AppCompatActivity {
     Context context;
 
     Long loginUserId;
-    String ctgr_name;
+    String categoryName;
     long pressedTime = 0; //'뒤로가기' 버튼 클릭했을 때의 시간
     InputMethodManager imm;  // 키보드 숨기기 위해 객체 선언
 
@@ -87,8 +82,6 @@ public class CategoryActivity extends AppCompatActivity {
         // 입력받는 방법을 관리하는 Manager 객체를 요청하여 InputMethodmanager에 반환
         imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
 
-        myDBHelper = new MyDBHelper(this);  // DB와 Table 생성 (MyDBHelper.java의 생성자, onCreate() 호출)
-
         loadCategory();  // 카테고리 불러오기위해 loadCategory() 함수 호출
 
         // 카테고리 추가 버튼을 클릭했을 때 동작하는 이벤트 처리
@@ -96,41 +89,79 @@ public class CategoryActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
-                    ctgr_name = ctgrAddET.getText().toString();
+                    validateLoginState();  // 로그인 상태 확인
 
-                    if(ctgr_name.equals("")) {
-                        throw new EmptyCtgrException();  // 카테고리에 빈칸을 입력한 경우 예외 처리
-                    }
-                    sqlDB = myDBHelper.getWritableDatabase();  // 읽고 쓰기용 DB 열기
+                    categoryName = ctgrAddET.getText().toString().trim();
 
-                    Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-                    // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-                    cursor = sqlDB.rawQuery("SELECT category_name FROM category WHERE category_name = '" + ctgr_name + "';", null);
+                    if (categoryName.getBytes().length <= 0)
+                        throw new NoInputDataException("카테고리를 입력하세요");  // 카테고리에 빈칸을 입력한 경우 예외 처리
 
-                    if(cursor.getCount()>0) {  // 결과 값이 존재하는 경우
-                        cursor.close();  // cursor 닫기
-                        throw new DuplicateCtgrException();  // 입력한 카테고리가 이미 존재하는 경우 예외 처리
-                    }
-                    cursor.close();  // cursor 닫기
+                    categoryApiService = client.create(CategoryApiService.class);
+                    Call<ResultDto> call = categoryApiService.createCategory(new CategoryDto.CreateUpdateRequestDto(loginUserId, categoryName));
+                    call.enqueue(new Callback<ResultDto>() {
+                        @Override
+                        public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
+                            ResultDto result = response.body();  // 응답 결과 바디
 
-                    sqlDB.execSQL("INSERT INTO category(category_name) VALUES ( '" + ctgr_name + "' );");  // 카테고리 Table에 카테고리 이름 값 삽입
+                            if (result != null && response.isSuccessful()) {
+                                Object resultData = result.getData();  // 응답 데이터
 
-                    callCtgr();  // 카테고리 불러오기
-                    sqlDB.close();  // DB 닫기
+                                // 응답 데이터를 IdResponseDto로 convert
+                                CategoryDto.IdResponseDto idResponseDto = new Gson().fromJson(new Gson().toJson(resultData), CategoryDto.IdResponseDto.class);
+                                long id = idResponseDto.getId();  // 등록한 카테고리 id
 
-                    listV.setAdapter(ctgrListVAdapter);  // ListView 객체에 ListViewAdapter 적용
+                                Log.i("ADD CATEGORY", "SUCCESS");
+                                PrintToast("카테고리 추가 : " + categoryName);
 
-                    ctgrAddET.setText("");  // 입력했던 내용을 비우고
-                    ctgrAddET.clearFocus();  // 초점을 없앤다
-                    imm.hideSoftInputFromWindow(ctgrAddET.getWindowToken(), 0);  // 키보드 숨기기
+                                loadCategory();  // 카테고리 불러오기
 
-                    PrintToast("카테고리 추가 : " + ctgr_name);  // PrintToast() 함수 호출하여 토스트 메세지 출력
-                } catch (EmptyCtgrException ee) {
-                    PrintToast("카테고리를 입력하세요.");  // PrintToast() 함수 호출하여 토스트 메세지 출력
-                } catch (DuplicateCtgrException de) {
-                    PrintToast("이미 존재하는 카테고리입니다.");  // PrintToast() 함수 호출하여 토스트 메세지 출력
-                } catch (Exception e) {
-                    PrintToast("추가 실패");  // PrintToast() 함수 호출하여 토스트 메세지 출력
+                                ctgrAddET.setText("");  // 입력했던 내용을 비우고
+                                ctgrAddET.clearFocus();  // 초점을 없앤다
+                                imm.hideSoftInputFromWindow(ctgrAddET.getWindowToken(), 0);  // 키보드 숨기기
+
+                            } else {
+                                try {
+                                    Log.i("ADD CATEGORY", "FAIL");
+                                    Log.e("Response error", response.toString());
+
+                                    // 에러 바디를 ErrorResultDto로 convert
+                                    Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                                    ErrorResultDto error = errorConverter.convert(response.errorBody());
+
+                                    Log.e("ErrorResultDto", error.toString());
+
+                                    int errorStatus = error.getStatus();  // 에러 상태
+                                    String errorMessage = error.getMessage();  // 에러 메시지
+
+                                    // 로그인 실패
+                                    if (errorMessage != null) {  // 개발자가 설정한 오류
+                                        PrintToast(errorMessage);  // 에러 메시지 출력
+                                        if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
+                                            logout();
+                                        }
+                                    } else {  // 기타 오류
+                                        if (errorStatus >= 500) {  // 서버 오류
+                                            PrintToast("Server Error");
+                                        } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                            PrintToast("Client Error");
+                                        }
+                                    }
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<ResultDto> call, Throwable t) {
+                            Log.e("Throwable error", t.getMessage());
+                        }
+                    });
+                } catch (UnauthorizedAccessException e) {  // 인증되지 않은 사용자가 접근할 때 발생하는 예외
+                    PrintToast(e.getMessage());  // 에러 메시지 출력
+                    logout();
+                } catch (NoInputDataException nide) {
+                    PrintToast(nide.getMessage());
                 }
             }
         });

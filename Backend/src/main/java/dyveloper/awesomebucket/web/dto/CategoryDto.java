@@ -24,4 +24,19 @@ public class CategoryDto {
         }
     }
 
+    /**
+     * 카테고리 등록, 수정 DTO
+     */
+    @Getter
+    public static class CreateUpdateRequestDto {
+        private long userId;  // 회원 ID
+        private String name;  // 카테고리명
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class IdResponseDto {
+        private long id;  // 카테고리 ID
+    }
+
 }
