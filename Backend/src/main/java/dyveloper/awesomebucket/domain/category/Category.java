@@ -42,6 +42,14 @@ public class Category extends BaseEntity {  // 카테고리
     }
 
 
+    //== 비즈니스 로직 ==//
+
+    // 카테고리 수정
+    public void changeName(String name) {
+        this.name = name;
+    }
+
+
     //== 연관관계 메서드 ==//
     public void setUser(User user) {
         this.user = user;
