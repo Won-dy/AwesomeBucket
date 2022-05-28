@@ -37,6 +37,7 @@ import com.example.awesomebucket.api.CategoryApiService;
 import com.example.awesomebucket.dto.CategoryDto;
 import com.example.awesomebucket.dto.ErrorResultDto;
 import com.example.awesomebucket.dto.ResultDto;
+import com.example.awesomebucket.exception.NoInputDataException;
 import com.example.awesomebucket.exception.UnauthorizedAccessException;
 import com.google.gson.Gson;
 
@@ -314,34 +315,66 @@ public class AddActivity extends AppCompatActivity {
                         try {
                             // 카테고리의 추가
                             ctgrEt = ctgrDialogView.findViewById(R.id.ctgrEt);
-                            ctgr_name = ctgrEt.getText().toString();
+                            ctgr_name = ctgrEt.getText().toString().trim();
 
-                            if (ctgr_name.equals("")) {
-                                throw new EmptyCtgrException();  // 카테고리에 빈칸을 입력한 경우 예외 처리
-                            }
-                            sqlDB = myDBHelper.getWritableDatabase();  // 읽고 쓰기용 DB 열기
+                            if (ctgr_name.getBytes().length <= 0)
+                                throw new NoInputDataException("카테고리를 입력해 주세요");
 
-                            Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-                            // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-                            cursor = sqlDB.rawQuery("SELECT category_name FROM category WHERE category_name = '" + ctgr_name + "';", null);
+                            validateLoginState();
 
-                            if (cursor.getCount() > 0) {  // 결과 값이 있는 경우
-                                cursor.close();  // cursor 닫기
-                                throw new DuplicateCtgrException();  // 입력한 카테고리가 이미 존재하는 경우 예외 처리
-                            }
-                            cursor.close();  // cursor 닫기
+                            categoryApiService = client.create(CategoryApiService.class);
+                            Call<ResultDto> call = categoryApiService.createCategory(new CategoryDto.CreateUpdateRequestDto(loginUserId, ctgr_name));
+                            call.enqueue(new Callback<ResultDto>() {
+                                @Override
+                                public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
+                                    ResultDto result = response.body();  // 응답 결과 바디
 
-                            sqlDB.execSQL("INSERT INTO category(category_name) VALUES ( '" + ctgr_name + "' );");  // 카테고리 Table에 카테고리 이름 값 삽입
+                                    if (result != null && response.isSuccessful()) {
+                                        Log.i("ADD CATEGORY", "SUCCESS");
+                                        PrintToast("카테고리 추가 : " + ctgr_name);
+                                    } else {
+                                        try {
+                                            Log.i("ADD CATEGORY", "FAIL");
+                                            Log.e("Response error", response.toString());
 
-                            sqlDB.close();  // DB 닫기
+                                            // 에러 바디를 ErrorResultDto로 convert
+                                            Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                                            ErrorResultDto error = errorConverter.convert(response.errorBody());
 
-                            PrintToast("카테고리 추가 : " + ctgr_name);  // PrintToast() 함수 호출하여 토스트 메세지 출력
-                        } catch (EmptyCtgrException ee) {
-                            PrintToast("카테고리를 입력하세요.");  // PrintToast() 함수 호출하여 토스트 메세지 출력
-                        } catch (DuplicateCtgrException de) {
-                            PrintToast("이미 존재하는 카테고리입니다.");  // PrintToast() 함수 호출하여 토스트 메세지 출력
-                        } catch (Exception e) {
-                            PrintToast("추가 실패");  // PrintToast() 함수 호출하여 토스트 메세지 출력
+                                            Log.e("ErrorResultDto", error.toString());
+
+                                            int errorStatus = error.getStatus();  // 에러 상태
+                                            String errorMessage = error.getMessage();  // 에러 메시지
+
+                                            // 로그인 실패
+                                            if (errorMessage != null) {  // 개발자가 설정한 오류
+                                                PrintToast(errorMessage);  // 에러 메시지 출력
+                                                if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
+                                                    logout();
+                                                }
+                                            } else {  // 기타 오류
+                                                if (errorStatus >= 500) {  // 서버 오류
+                                                    PrintToast("Server Error");
+                                                } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                                    PrintToast("Client Error");
+                                                }
+                                            }
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<ResultDto> call, Throwable t) {
+                                    Log.e("Throwable error", t.getMessage());
+                                }
+                            });
+                        } catch (NoInputDataException nide) {
+                            PrintToast(nide.getMessage());
+                        } catch (UnauthorizedAccessException e) {  // 인증되지 않은 사용자가 접근할 때 발생하는 예외
+                            PrintToast(e.getMessage());  // 에러 메시지 출력
+                            logout();
                         }
                     }
                 });
