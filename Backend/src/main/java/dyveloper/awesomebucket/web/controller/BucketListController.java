@@ -16,10 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,4 +83,21 @@ public class BucketListController {
             return new ResponseEntity<>(new ErrorResultDto(404, "Not Found Category", nfre.getMessage()), HttpStatus.NOT_FOUND);
         }
     }
+
+    /**
+     * 버킷리스트 등록 API
+     */
+    @PostMapping("/buckets")
+    public ResponseEntity createBucketList(@RequestBody BucketListDto.CreateUpdateRequestDto createUpdateRequestDto) {
+        try {
+            User user = userService.findLoginUserById(createUpdateRequestDto.getUserId());  // 로그인 유저 확인
+            bucketListService.createBucketList(user, createUpdateRequestDto);
+            return new ResponseEntity<>(new ResultDto(200, "Add BucketList Success"), HttpStatus.OK);
+        } catch (UnauthorizedAccessException e) {  // DB에 없는 사용자가 임의 접근
+            return new ResponseEntity<>(new ErrorResultDto(401, "Unauthorized Access", "로그인이 필요합니다"), HttpStatus.UNAUTHORIZED);
+        } catch (NotFoundResourceException nfre) {
+            return new ResponseEntity<>(new ErrorResultDto(404, "Not Found Category", nfre.getMessage()), HttpStatus.NOT_FOUND);
+        }
+    }
+
 }

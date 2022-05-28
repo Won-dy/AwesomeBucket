@@ -33,7 +33,9 @@ import com.example.awesomebucket.MyDBHelper;
 import com.example.awesomebucket.MySharedPreferences;
 import com.example.awesomebucket.R;
 import com.example.awesomebucket.api.APIClient;
+import com.example.awesomebucket.api.BucketListApiService;
 import com.example.awesomebucket.api.CategoryApiService;
+import com.example.awesomebucket.dto.BucketListDto;
 import com.example.awesomebucket.dto.CategoryDto;
 import com.example.awesomebucket.dto.ErrorResultDto;
 import com.example.awesomebucket.dto.ResultDto;
@@ -75,6 +77,7 @@ public class AddActivity extends AppCompatActivity {
 
     Retrofit client = APIClient.getClient();
     CategoryApiService categoryApiService;
+    BucketListApiService bucketListApiService;
 
     Long loginUserId;
     int y, m, d;
@@ -459,77 +462,92 @@ public class AddActivity extends AppCompatActivity {
         switch (item.getItemId()) {  // 선택된 메뉴 판별 및 처리
             // 체크(완료) 버튼 누르면
             case R.id.checkB:
-
                 // 입력 값 변수에 저장
                 title = nameEt.getText().toString();
                 memo = memoEt.getText().toString();
-                target_date = tgdEt.getText().toString();
+                target_date = tgdEt.getText().toString().trim();
+                String achvRate = achvEt.getText().toString().trim();
+                String achvDate = achvdEt.getText().toString().trim();
+                String categoryName = cNameEt.getText().toString().trim();
 
-                if ((achvEt.getText().toString()).equals("")) {  // 달성률 빈칸이면
+                if (achvRate.getBytes().length <= 0) {  // 달성률 빈칸이면
                     achievement_rate = 0;  // 0%로 설정
                 } else {
-                    achievement_rate = Integer.parseInt(achvEt.getText().toString());  // 입력 값으로 설정
+                    achievement_rate = Integer.parseInt(achvRate);  // 입력 값으로 설정
                 }
 
                 int isEmpty = 0;  // 달성일 입력 안되었으면 0, 입력 되었으면 1
-                if ((achvdEt.getText().toString()).equals("")) {  // 달성일 빈칸이면
+                if (achvDate.getBytes().length <= 0) {  // 달성일 빈칸이면
                     completion_date = null;  // null로 설정
                 } else {
-                    completion_date = achvdEt.getText().toString();  // 입력 값으로 설정
+                    completion_date = achvDate;  // 입력 값으로 설정
                     isEmpty = 1;
                 }
 
                 try {
                     // 필수 항목 미기재 시
-                    if (title.equals("") || target_date.equals("") || (cNameEt.getText().toString()).equals(""))
-                        throw new EmptyCtgrException();  // 값을 입력하지 않은 경우 예외 처리
-                    if ((achvdEt.getText().toString()).equals("") && achvdEt.getVisibility() == View.VISIBLE)
-                        throw new EmptyCtgrException();  // 값을 입력하지 않은 경우 예외 처리
+                    if (title.equals("") || target_date.getBytes().length <= 0 || categoryName.getBytes().length <= 0)
+                        throw new NoInputDataException("필수 항목을 입력해 주세요");
+                    if (isEmpty == 0 && achvdEt.getVisibility() == View.VISIBLE)
+                        throw new NoInputDataException("필수 항목을 입력해 주세요");
 
                     if (achievement_rate > 100 || achievement_rate < 0)
                         throw new ValidityException();  // 달성률 입력 값이 0~100 범위를 벗어나는 경우 예외 처리
 
+                    validateLoginState();  // 로그인 상태 확인
 
                     //**************************** 추가를 위해 해당 액티비티를 접근했을 경우 ********************************
                     if (flag == 1) {
-                        try {
-                            sqlDB = myDBHelper.getWritableDatabase();  // 읽고 쓰기용 DB 열기
+                        bucketListApiService = client.create(BucketListApiService.class);
+                        Call<ResultDto> call = bucketListApiService.createBucketList(new BucketListDto.CreateUpdateRequestDto(loginUserId, categoryName, title, memo, (int) importance, achievement_rate, target_date, completion_date));
+                        call.enqueue(new Callback<ResultDto>() {
+                            @Override
+                            public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
+                                ResultDto result = response.body();  // 응답 결과 바디
 
-                            Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-                            // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-                            cursor = sqlDB.rawQuery("SELECT title FROM bucket WHERE title = '" + title + "';", null);
+                                if (result != null && response.isSuccessful()) {
+                                    Log.i("ADD BUCKETLIST", "SUCCESS");
+                                    addSuccess = 1;
+                                    editSuccess = 0;
+                                } else {
+                                    try {
+                                        Log.i("ADD BUCKETLIST", "FAIL");
+                                        Log.e("Response error", response.toString());
+                                        addSuccess = 0;
 
-                            if (cursor.getCount() > 0) {  // 결과 값이 있는 경우
-                                cursor.close();  // cursor 닫기
-                                throw new DuplicateCtgrException();  // 입력한 버킷 명이 이미 존재하는 경우 사용자 정의 예외 처리
+                                        // 에러 바디를 ErrorResultDto로 convert
+                                        Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                                        ErrorResultDto error = errorConverter.convert(response.errorBody());
+
+                                        Log.e("ErrorResultDto", error.toString());
+
+                                        int errorStatus = error.getStatus();  // 에러 상태
+                                        String errorMessage = error.getMessage();  // 에러 메시지
+
+                                        if (errorMessage != null) {  // 개발자가 설정한 오류
+                                            PrintToast(errorMessage);  // 에러 메시지 출력
+                                            if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
+                                                logout();
+                                            }
+                                        } else {  // 기타 오류
+                                            if (errorStatus >= 500) {  // 서버 오류
+                                                PrintToast("Server Error");
+                                            } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                                PrintToast("Client Error");
+                                            }
+                                        }
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                             }
-                            cursor.close();
 
-                            // 입력한 버킷 정보들을 bucket 테이블에 INSERT
-                            switch (isEmpty) {
-                                // 달성일 null로 설정
-                                case 0:
-                                    sqlDB.execSQL("INSERT INTO bucket ( title, category_number, importance, achievement_rate, target_date, completion_date, memo )" +
-                                            "VALUES ( '" + title + "', '" + category_number + "', '" + importance + "', '" + achievement_rate + "', '" +
-                                            target_date + "', " + completion_date + ", '" + memo + "' );");
-                                    break;
-                                // 달성일 입력값으로 설정
-                                case 1:
-                                    sqlDB.execSQL("INSERT INTO bucket ( title, category_number, importance, achievement_rate, target_date, completion_date, memo )" +
-                                            "VALUES ( '" + title + "', '" + category_number + "', '" + importance + "', '" + achievement_rate + "', '" +
-                                            target_date + "', '" + completion_date + "', '" + memo + "' );");
-                                    break;
+                            @Override
+                            public void onFailure(Call<ResultDto> call, Throwable t) {
+                                Log.e("Throwable error", t.getMessage());
+                                addSuccess = 0;
                             }
-                            sqlDB.close();
-                            addSuccess = 1;
-                            editSuccess = 0;
-
-                        } catch (DuplicateCtgrException de) {
-                            PrintToast("이미 존재하는 버킷명입니다.");  // PrintToast() 함수 호출하여 토스트 메세지 출력
-                        } catch (Exception e) {
-                            PrintToast("버킷 추가 실패");  // PrintToast() 함수 호출하여 토스트 메세지 출력
-                            addSuccess = 0;
-                        }
+                        });
                     }
 
                     //**************************** 수정을 위해 해당 액티비티를 접근했을 경우 ********************************
@@ -579,10 +597,13 @@ public class AddActivity extends AppCompatActivity {
                     if (editSuccess == 1) PrintToast("버킷이 수정되었습니다.");
 
                     return true;
-                } catch (EmptyCtgrException ee) {
-                    PrintToast("필수 항목을 입력해 주세요.");  // PrintToast() 함수 호출하여 토스트 메세지 출력
+                } catch (NoInputDataException nide) {
+                    PrintToast(nide.getMessage());  // PrintToast() 함수 호출하여 토스트 메세지 출력
                 } catch (ValidityException ve) {
                     PrintToast("달성률은 0~100 사이의 값을 입력해 주세요");  // PrintToast() 함수 호출하여 토스트 메세지 출력
+                } catch (UnauthorizedAccessException e) {  // 인증되지 않은 사용자가 접근할 때 발생하는 예외
+                    PrintToast(e.getMessage());  // 에러 메시지 출력
+                    logout();
                 } catch (Exception e) {
                     PrintToast("실패");  // PrintToast() 함수 호출하여 토스트 메세지 출력
                 }

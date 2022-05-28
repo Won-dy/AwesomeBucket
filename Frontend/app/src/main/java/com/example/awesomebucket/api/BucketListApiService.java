@@ -1,9 +1,12 @@
 package com.example.awesomebucket.api;
 
+import com.example.awesomebucket.dto.BucketListDto;
 import com.example.awesomebucket.dto.ResultDto;
 
 import retrofit2.Call;
+import retrofit2.http.Body;
 import retrofit2.http.GET;
+import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
@@ -16,4 +19,7 @@ public interface BucketListApiService {
                                    @Query("direction") String direction,
                                    @Query(value = "category", encoded = true) String categoryName);
 
+    // 버킷리스트 등록 API
+    @POST("buckets")
+    Call<ResultDto> createBucketList(@Body BucketListDto.CreateUpdateRequestDto createUpdateRequestDto);
 }
