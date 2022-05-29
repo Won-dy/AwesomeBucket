@@ -1,6 +1,6 @@
 package com.example.awesomebucket.activity;
 
-import static com.example.awesomebucket.MyConstant.NO_LOGIN_USER_ID;
+import static com.example.awesomebucket.MyConstant.NO_ID;
 import static com.example.awesomebucket.MyConstant.PREFERENCE_FILE_USER;
 
 import android.content.Context;
@@ -246,7 +246,7 @@ public class CategoryActivity extends AppCompatActivity {
 
     //**************************** 로그인되어있나 확인하는 validateLoginState() 함수 정의 ********************************
     public void validateLoginState() throws UnauthorizedAccessException {
-        if (loginUserId == NO_LOGIN_USER_ID)
+        if (loginUserId == NO_ID)
             throw new UnauthorizedAccessException("로그인이 필요합니다");
     }
 
