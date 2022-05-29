@@ -10,6 +10,7 @@ import dyveloper.awesomebucket.web.dto.BucketListDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -43,6 +44,13 @@ public class BucketListService {
                 throw new NotFoundResourceException("존재하지 않는 카테고리입니다");
             }
         }
+    }
+
+    // 버킷리스트 삭제
+    @Transactional
+    public void deleteBucketList(User user, Long bucketListId) {
+        BucketList bucketList = bucketListRepository.findByIdAndUserAndIsDeleted(bucketListId, user, false).orElseThrow(NotFoundResourceException::new);
+        bucketList.delete(user, bucketList.getCategory());
     }
 
     // 전체 버킷리스트 정렬

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -18,6 +19,8 @@ import static javax.persistence.FetchType.LAZY;
 @DynamicInsert
 @Getter
 @Entity
+//@SQLDelete(sql = "UPDATE bucket_list SET is_deleted=true where bucket_list_id=?")
+@Where(clause = "is_deleted=0")
 public class BucketList extends BaseEntity {  // 버킷리스트
 
     @Id
@@ -68,6 +71,13 @@ public class BucketList extends BaseEntity {  // 버킷리스트
 
     //==비즈니스 로직==//
 
+    // 버킷리스트 삭제
+    public void delete(User user, Category category) {
+        this.isDeleted = true;  // 변경감지로 필드 변경
+        deleteFromUser(user);
+        deleteFromCategory(category);
+    }
+
     // 카테고리 삭제시 기타 카테고리로 변경
     public void setCategoryDefault(Category defaultCategory) {
         this.category = defaultCategory;
@@ -85,6 +95,13 @@ public class BucketList extends BaseEntity {  // 버킷리스트
         category.getBucketLists().add(this);
     }
 
+    public void deleteFromUser(User user) {
+        user.getBucketLists().remove(this);
+    }
+
+    public void deleteFromCategory(Category category) {
+        category.getBucketLists().remove(this);
+    }
 
     //== 생성 메서드 ==//
     public static BucketList createBucketList(String title, String memo, int importance, int achievementRate, LocalDate targetDate, LocalDate achievementDate, User user, Category category) {

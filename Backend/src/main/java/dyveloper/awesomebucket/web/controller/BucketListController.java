@@ -118,4 +118,19 @@ public class BucketListController {
         }
     }
 
+    /**
+     * 버킷리스트 삭제 API
+     */
+    @DeleteMapping("/users/{userId}/buckets/{bucketId}")
+    public ResponseEntity deleteBucketList(@PathVariable Long userId, @PathVariable Long bucketId) {
+        try {
+            User user = userService.findLoginUserById(userId);  // 로그인 유저 확인
+            bucketListService.deleteBucketList(user, bucketId);
+            return new ResponseEntity<>(new ResultDto(200, "Delete BucketList Success"), HttpStatus.OK);
+        } catch (UnauthorizedAccessException e) {  // DB에 없는 사용자가 임의 접근
+            return new ResponseEntity<>(new ErrorResultDto(401, "Unauthorized Access", "로그인이 필요합니다"), HttpStatus.UNAUTHORIZED);
+        } catch (NotFoundResourceException nfre) {
+            return new ResponseEntity<>(new ErrorResultDto(404, "Not Found BucketList", "존재하지 않는 버킷리스트입니다다"), HttpStatus.NOT_FOUND);
+        }
+    }
 }

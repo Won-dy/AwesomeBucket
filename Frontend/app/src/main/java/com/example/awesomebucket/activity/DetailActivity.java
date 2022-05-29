@@ -40,6 +40,7 @@ import java.io.IOException;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Converter;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -47,9 +48,6 @@ import retrofit2.Retrofit;
 public class DetailActivity extends AppCompatActivity {
 
     // 변수 선언
-    MyDBHelper myDBHelper;
-    SQLiteDatabase sqlDB;
-
     Retrofit client = APIClient.getClient();
     BucketListApiService bucketListApiService;
 
@@ -99,8 +97,6 @@ public class DetailActivity extends AppCompatActivity {
 
         // 로그인 한 User의 기본키 조회
         loginUserId = MySharedPreferences.getLoginUserId(getApplicationContext(), PREFERENCE_FILE_USER, "loginUserId");
-
-        myDBHelper = new MyDBHelper(this);  // DB와 Table 생성 (MyDBHelper.java의 생성자, onCreate() 호출)
 
         if (bucketListId == NO_ID) {
             PrintToast("버킷리스트 조회 실패");
@@ -243,20 +239,66 @@ public class DetailActivity extends AppCompatActivity {
                 deleteDlg.setPositiveButton("확인", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            validateLoginState();  // 로그인 상태 확인
 
-                        sqlDB = myDBHelper.getWritableDatabase();  // 읽고 쓰기용 DB 열기
+                            bucketListApiService = client.create(BucketListApiService.class);
+                            Call<ResultDto> call = bucketListApiService.deleteBucketList(loginUserId, bucketListId);
+                            call.enqueue(new Callback<ResultDto>() {
+                                @Override
+                                public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
+                                    ResultDto result = response.body();  // 응답 결과 바디
 
-                        sqlDB.execSQL("DELETE FROM bucket WHERE title = '" + title + "';");  // 버킷 삭제
+                                    if (result != null && response.isSuccessful()) {
+                                        Log.i("Delete BucketList", "SUCCESS");
+                                        PrintToast("버킷리스트가 삭제되었습니다.");  // PrintToast() 함수 호출하여 토스트 메세지 출력
 
-                        sqlDB.close();  // DB 닫기
+                                        // 명시적 인텐트를 사용하여 MainActivity 호출
+                                        Intent intent = new Intent(DetailActivity.this, MainActivity.class);
+                                        startActivity(intent);
+                                        finish();
+                                    } else {  // 버킷리스트 삭제 실패
+                                        Log.i("Delete BucketList", "FAIL");
+                                        Log.e("Response error", response.toString());
 
-                        // 명시적 인텐트를 사용하여 MainActivity 호출
-                        Intent intent = new Intent(DetailActivity.this, MainActivity.class);
-                        startActivity(intent);
+                                        try {
+                                            // 에러 바디를 ErrorResultDto로 convert
+                                            Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                                            ErrorResultDto error = null;
+                                            error = errorConverter.convert(response.errorBody());
 
-                        finish();
+                                            Log.e("ErrorResultDto", error.toString());
 
-                        PrintToast("[ " + title + " ] 삭제되었습니다.");  // PrintToast() 함수 호출하여 토스트 메세지 출력
+                                            int errorStatus = error.getStatus();  // 에러 상태
+                                            String errorMessage = error.getMessage();  // 에러 메시지
+
+                                            if (errorMessage != null) {  // 개발자가 설정한 오류
+                                                PrintToast(errorMessage);  // 에러 메시지 출력
+                                                if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
+                                                    logout();
+                                                }
+                                            } else {  // 기타 오류
+                                                if (errorStatus >= 500) {  // 서버 오류
+                                                    PrintToast("Server Error");
+                                                } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                                    PrintToast("Client Error");
+                                                }
+                                            }
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<ResultDto> call, Throwable t) {
+                                    Log.e("Throwable error", t.getMessage());
+                                }
+                            });
+                        } catch (UnauthorizedAccessException e) {  // 인증되지 않은 사용자가 접근할 때 발생하는 예외
+                            PrintToast(e.getMessage());  // 에러 메시지 출력
+                            logout();
+                        }
                     }
                 });
                 // 취소 버튼을 클릭했을 때 동작하는 이벤트 처리

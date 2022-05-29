@@ -5,6 +5,7 @@ import com.example.awesomebucket.dto.ResultDto;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
@@ -26,4 +27,8 @@ public interface BucketListApiService {
     // 버킷리스트 상세조회 API
     @GET("users/{userId}/buckets/{bucketId}")
     Call<ResultDto> getBucketListDetail(@Path("userId") Long userId, @Path("bucketId") Long bucketId);
+
+    // 버킷리스트 삭제 API
+    @DELETE("users/{userId}/buckets/{bucketId}")
+    Call<ResultDto> deleteBucketList(@Path("userId") Long userId, @Path("bucketId") Long bucketId);
 }
