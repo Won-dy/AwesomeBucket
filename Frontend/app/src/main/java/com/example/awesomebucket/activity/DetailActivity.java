@@ -59,7 +59,6 @@ public class DetailActivity extends AppCompatActivity {
     Long loginUserId;
     long bucketListId;
     String category_name, title, target_date, achievement_date, registered_date, memo;
-    Long categoryId;
     int achievement_rate;
     float importance;
     long pressedTime = 0; //'뒤로가기' 버튼 클릭했을 때의 시간
@@ -122,7 +121,6 @@ public class DetailActivity extends AppCompatActivity {
                             // 응답 데이터를 findDetailResponseDto로 convert
                             BucketListDto.FindDetailResponseDto findDetailResponseDto = new Gson().fromJson(new Gson().toJson(resultData), BucketListDto.FindDetailResponseDto.class);
 
-                            categoryId = findDetailResponseDto.getId();
                             title = findDetailResponseDto.getTitle();
                             registered_date = findDetailResponseDto.getRegisteredDate();
                             importance = findDetailResponseDto.getImportance();

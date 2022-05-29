@@ -4,7 +4,6 @@ import static com.example.awesomebucket.MyConstant.NO_ID;
 import static com.example.awesomebucket.MyConstant.PREFERENCE_FILE_USER;
 
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -25,7 +24,6 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.awesomebucket.MyDBHelper;
 import com.example.awesomebucket.MySharedPreferences;
 import com.example.awesomebucket.R;
 import com.example.awesomebucket.api.APIClient;
@@ -57,9 +55,6 @@ public class MainActivity<T> extends AppCompatActivity {
     BucketListApiService bucketListApiService;
 
     Long loginUserId;
-
-    MyDBHelper myDBHelper;
-    SQLiteDatabase sqlDB;
 
     TextView instructionTv;
     Button ctgrManagerBtn;
@@ -108,34 +103,8 @@ public class MainActivity<T> extends AppCompatActivity {
         toastView = (View) View.inflate(getApplicationContext(), R.layout.toast, null);
         toastTv = (TextView) toastView.findViewById(R.id.toastTv);
 
-        myDBHelper = new MyDBHelper(this);  // DB와 Table 생성 (MyDBHelper.java의 생성자, onCreate() 호출)
-
         // 로그인 한 User의 기본키 조회
         loginUserId = MySharedPreferences.getLoginUserId(getApplicationContext(), PREFERENCE_FILE_USER, "loginUserId");
-
-        //**************************** Table에 초기 데이터 넣기 ********************************
-        try {
-            sqlDB = myDBHelper.getWritableDatabase();  // 읽고 쓰기용 DB 열기
-
-            // 카테고리의 초기 데이터 삽입
-            sqlDB.execSQL("INSERT INTO category VALUES ( 0, '기타' );");
-            sqlDB.execSQL("INSERT INTO category(category_name) VALUES ( '자기 계발' );");
-            sqlDB.execSQL("INSERT INTO category(category_name) VALUES ( '자산 관리' );");
-            sqlDB.execSQL("INSERT INTO category(category_name) VALUES ( '취미' );");
-
-            // 버킷리스트 초기 데이터 삽입
-            sqlDB.execSQL("INSERT INTO bucket ( title, category_number, importance, achievement_rate, target_date, memo ) " +
-                    "VALUES ( '1억 모으기', 2, 3, 60, '2024-12-31', '3년 안에 1억 모으자 현재 잔고 : 6천만원' );");
-            sqlDB.execSQL("INSERT INTO bucket ( title, category_number, importance, achievement_rate, target_date, memo ) " +
-                    "VALUES ( '몸무게 5KG 빼기', 0, 2, 0, '2022-08-01', '목표 몸무게 : 45kg' );");
-            sqlDB.execSQL("INSERT INTO bucket ( title, category_number, importance, achievement_rate, target_date, memo ) " +
-                    "VALUES ( '책 10권 읽기', 1, 2, 10, '2022-12-31', '독서는 마음의 양식!' );");
-            sqlDB.execSQL("INSERT INTO bucket ( title, category_number, importance, achievement_rate, target_date, completion_date, memo ) " +
-                    "VALUES ( '운전면허 따기', 1, 1, 100, '2021-02-20', '2021-02-24', '합격~!' );");
-            sqlDB.close();  // DB 닫기
-        } catch (Exception e) {
-            // 애플리케이션 설치 후 최초 실행 시에 한번만 초기 데이터가 삽입되고 이후에는 예외처리를 통해 트라이 문이 실행되지 않아 데이터가 삽입되지 않는다
-        }
 
 
         //**************************** 카테고리 관리 화면으로 이동 ********************************
