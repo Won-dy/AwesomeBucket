@@ -6,8 +6,6 @@ import static com.example.awesomebucket.MyConstant.PREFERENCE_FILE_USER;
 import android.app.DatePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -30,7 +28,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.awesomebucket.MyConstant;
-import com.example.awesomebucket.MyDBHelper;
 import com.example.awesomebucket.MySharedPreferences;
 import com.example.awesomebucket.R;
 import com.example.awesomebucket.api.APIClient;
@@ -67,9 +64,6 @@ class ValidityException extends Exception {
 public class AddActivity extends AppCompatActivity {
 
     // 변수 선언
-    MyDBHelper myDBHelper;
-    SQLiteDatabase sqlDB;
-
     View ctgrDialogView, toastView;
     TextView toastTv, achvdTv;
     Toast toast;
@@ -85,7 +79,7 @@ public class AddActivity extends AppCompatActivity {
     int y, m, d;
     int flag;
     int addSuccess = 0, editSuccess = 0;
-    int category_number, achievement_rate, bucket_number;
+    int achievement_rate;
     float importance = 1;
     String title, memo, target_date, achievement_date, ctgr_name, category_name, sltCtgr, beforeEdit;
     long pressedTime = 0; //'뒤로가기' 버튼 클릭했을 때의 시간
@@ -121,8 +115,6 @@ public class AddActivity extends AppCompatActivity {
 
         // 로그인 한 User의 기본키 조회
         loginUserId = MySharedPreferences.getLoginUserId(getApplicationContext(), PREFERENCE_FILE_USER, "loginUserId");
-
-        myDBHelper = new MyDBHelper(this);  // DB와 Table 생성 (MyDBHelper.java의 생성자, onCreate() 호출)
 
         // intent를 통해 데이터 값을 전달 받음
         Intent inIntent = getIntent();
@@ -613,40 +605,56 @@ public class AddActivity extends AppCompatActivity {
 
                     //**************************** 수정을 위해 해당 액티비티를 접근했을 경우 ********************************
                     else if (flag == 2) {
-                        try {
-                            sqlDB = myDBHelper.getWritableDatabase();  // 읽고 쓰기용 DB 열기
+                        bucketListApiService = client.create(BucketListApiService.class);
+                        Call<ResultDto> call = bucketListApiService.updateBucketList(bucketListId, new BucketListDto.CreateUpdateRequestDto(loginUserId, categoryName, title, memo, (int) importance, achievement_rate, target_date, achievement_date));
+                        call.enqueue(new Callback<ResultDto>() {
+                            @Override
+                            public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
+                                ResultDto result = response.body();  // 응답 결과 바디
 
-                            Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-                            // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-                            cursor = sqlDB.rawQuery("SELECT bucket_number FROM bucket WHERE title= '" + beforeEdit + "';", null);
+                                if (result != null && response.isSuccessful()) {
+                                    Log.i("EDIT BUCKETLIST", "SUCCESS");
+                                    editSuccess = 1;
+                                    addSuccess = 0;
+                                } else {
+                                    try {
+                                        Log.i("EDIT BUCKETLIST", "FAIL");
+                                        Log.e("Response error", response.toString());
+                                        editSuccess = 0;
 
-                            while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
-                                bucket_number = cursor.getInt(0);
+                                        // 에러 바디를 ErrorResultDto로 convert
+                                        Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                                        ErrorResultDto error = errorConverter.convert(response.errorBody());
+
+                                        Log.e("ErrorResultDto", error.toString());
+
+                                        int errorStatus = error.getStatus();  // 에러 상태
+                                        String errorMessage = error.getMessage();  // 에러 메시지
+
+                                        if (errorMessage != null) {  // 개발자가 설정한 오류
+                                            PrintToast(errorMessage);  // 에러 메시지 출력
+                                            if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
+                                                logout();
+                                            }
+                                        } else {  // 기타 오류
+                                            if (errorStatus >= 500) {  // 서버 오류
+                                                PrintToast("Server Error");
+                                            } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                                PrintToast("Client Error");
+                                            }
+                                        }
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                             }
-                            cursor.close();  // cursor 닫기
 
-                            // 수정한 버킷 정보들을 bucket 테이블에 UPDATE
-                            switch (isEmpty) {
-                                // 달성일 null로 설정
-                                case 0:
-                                    sqlDB.execSQL("UPDATE bucket SET title = '" + title + "', category_number = " + category_number + ", importance = " + importance + ", " +
-                                            "achievement_rate = " + achievement_rate + ", target_date = '" + target_date + "', completion_date = " + achievement_date + ", " +
-                                            "memo = '" + memo + "' WHERE bucket_number = " + bucket_number + ";");
-                                    break;
-                                // 달성일 입력값으로 설정
-                                case 1:
-                                    sqlDB.execSQL("UPDATE bucket SET title = '" + title + "', category_number = " + category_number + ", importance = " + importance + ", " +
-                                            "achievement_rate = " + achievement_rate + ", target_date = '" + target_date + "', completion_date = '" + achievement_date + "', " +
-                                            "memo = '" + memo + "' WHERE bucket_number = " + bucket_number + ";");
+                            @Override
+                            public void onFailure(Call<ResultDto> call, Throwable t) {
+                                Log.e("Throwable error", t.getMessage());
+                                editSuccess = 0;
                             }
-                            sqlDB.close();
-                            editSuccess = 1;
-                            addSuccess = 0;
-
-                        } catch (Exception e) {
-                            PrintToast("버킷 수정 실패");  // PrintToast() 함수 호출하여 토스트 메세지 출력
-                            editSuccess = 0;
-                        }
+                        });
                     }
                     // 명시적 인텐트를 사용하여 MainActivity 호출
                     Intent intent = new Intent(AddActivity.this, MainActivity.class);

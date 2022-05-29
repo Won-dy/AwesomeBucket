@@ -119,6 +119,22 @@ public class BucketListController {
     }
 
     /**
+     * 버킷리스트 수정 API
+     */
+    @PatchMapping("/buckets/{bucketId}")
+    public ResponseEntity updateBucketList(@PathVariable Long bucketId, @RequestBody BucketListDto.CreateUpdateRequestDto createUpdateRequestDto) {
+        try {
+            User user = userService.findLoginUserById(createUpdateRequestDto.getUserId());  // 로그인 유저 확인
+            bucketListService.updateBucketList(user, bucketId, createUpdateRequestDto);
+            return new ResponseEntity<>(new ResultDto(200, "Update BucketList Success"), HttpStatus.OK);
+        } catch (UnauthorizedAccessException e) {  // DB에 없는 사용자가 임의 접근
+            return new ResponseEntity<>(new ErrorResultDto(401, "Unauthorized Access", "로그인이 필요합니다"), HttpStatus.UNAUTHORIZED);
+        } catch (NotFoundResourceException nfre) {
+            return new ResponseEntity<>(new ErrorResultDto(404, "Not Found Category or BucketList", nfre.getMessage()), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
      * 버킷리스트 삭제 API
      */
     @DeleteMapping("/users/{userId}/buckets/{bucketId}")

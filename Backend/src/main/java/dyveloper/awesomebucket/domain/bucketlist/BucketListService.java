@@ -46,6 +46,29 @@ public class BucketListService {
         }
     }
 
+    // 버킷리스트 수정
+    @Transactional
+    public void updateBucketList(User user, Long bucketId, BucketListDto.CreateUpdateRequestDto createUpdateRequestDto) {
+        BucketList editBucketList = bucketListRepository.findByIdAndUserAndIsDeleted(bucketId, user, false).orElse(null);
+        if (editBucketList == null) {
+            throw new NotFoundResourceException("존재하지 않는 버킷리스트입니다");
+        } else {
+            Category category = categoryService.findByUserAndName(user, createUpdateRequestDto.getCategoryName());  // 카테고리 조회
+            if (category != null) {  // 유저 카테고리의 버킷 수정
+                editBucketList.update(createUpdateRequestDto.getTitle(), createUpdateRequestDto.getMemo(), createUpdateRequestDto.getImportance(),
+                        createUpdateRequestDto.getAchievementRate(), createUpdateRequestDto.getTargetDate(), createUpdateRequestDto.getAchievementDate(), user, category);
+            } else {
+                Category defaultCategory = categoryRepository.findByNameAndIsDefault(createUpdateRequestDto.getCategoryName(), true).orElse(null);  // 디폴트 카테고리 조회
+                if (defaultCategory != null) {  // 디폴트 카테고리의 버킷 수정
+                    editBucketList.update(createUpdateRequestDto.getTitle(), createUpdateRequestDto.getMemo(), createUpdateRequestDto.getImportance(),
+                            createUpdateRequestDto.getAchievementRate(), createUpdateRequestDto.getTargetDate(), createUpdateRequestDto.getAchievementDate(), user, defaultCategory);
+                } else {  // 수정 실패
+                    throw new NotFoundResourceException("존재하지 않는 카테고리입니다");
+                }
+            }
+        }
+    }
+
     // 버킷리스트 삭제
     @Transactional
     public void deleteBucketList(User user, Long bucketListId) {
