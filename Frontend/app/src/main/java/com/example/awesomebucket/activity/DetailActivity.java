@@ -1,13 +1,16 @@
 package com.example.awesomebucket.activity;
 
+import static com.example.awesomebucket.MyConstant.NO_ID;
+import static com.example.awesomebucket.MyConstant.PREFERENCE_FILE_USER;
+
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,14 +24,34 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.awesomebucket.MyConstant;
 import com.example.awesomebucket.MyDBHelper;
+import com.example.awesomebucket.MySharedPreferences;
 import com.example.awesomebucket.R;
+import com.example.awesomebucket.api.APIClient;
+import com.example.awesomebucket.api.BucketListApiService;
+import com.example.awesomebucket.dto.BucketListDto;
+import com.example.awesomebucket.dto.ErrorResultDto;
+import com.example.awesomebucket.dto.ResultDto;
+import com.example.awesomebucket.exception.UnauthorizedAccessException;
+import com.google.gson.Gson;
+
+import java.io.IOException;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Converter;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class DetailActivity extends AppCompatActivity {
 
     // 변수 선언
     MyDBHelper myDBHelper;
     SQLiteDatabase sqlDB;
+
+    Retrofit client = APIClient.getClient();
+    BucketListApiService bucketListApiService;
 
     TextView bName, d_Day, crtDate, cName, achvRt, tgdtTv, achvdtTv, memoTv;
     ProgressBar pBar;
@@ -37,10 +60,14 @@ public class DetailActivity extends AppCompatActivity {
     TextView toastTv;
     Toast toast;
 
-    String category_name, title, target_date, completion_date, creation_date, memo;
-    int category_number, achievement_rate;
+    Long loginUserId;
+    long bucketListId;
+    String category_name, title, target_date, achievement_date, registered_date, memo;
+    Long categoryId;
+    int achievement_rate;
     float importance;
     long pressedTime = 0; //'뒤로가기' 버튼 클릭했을 때의 시간
+    long start, end; // 함수 실행시간 측정을 위한 변수
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -67,42 +94,97 @@ public class DetailActivity extends AppCompatActivity {
         toastTv = (TextView) toastView.findViewById(R.id.toastTv);
 
         // MainActivity로 부터 intent를 통해 데이터 값을 전달 받음
-        Intent inIntent = getIntent();  // bucketName, dDay 값 받기
-        bName.setText(inIntent.getStringExtra("name"));
-        title = bName.getText().toString();
-        d_Day.setText(inIntent.getStringExtra("dDay"));
+        Intent inIntent = getIntent();
+        bucketListId = inIntent.getLongExtra("bucketListId", MyConstant.NO_ID);  // 버킷리스트 ID 값 받기
+
+        // 로그인 한 User의 기본키 조회
+        loginUserId = MySharedPreferences.getLoginUserId(getApplicationContext(), PREFERENCE_FILE_USER, "loginUserId");
 
         myDBHelper = new MyDBHelper(this);  // DB와 Table 생성 (MyDBHelper.java의 생성자, onCreate() 호출)
 
-        sqlDB = myDBHelper.getReadableDatabase();  // 읽기용 DB 열기
-
-        Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-        // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-        cursor = sqlDB.rawQuery("SELECT * FROM bucket WHERE title = '" + title + "';", null);
-
-        while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
-            category_number = cursor.getInt(2);
-            importance = cursor.getInt(3);
-            achievement_rate = cursor.getInt(4);
-            target_date = cursor.getString(5);
-            completion_date = cursor.getString(6);
-            creation_date = cursor.getString(7);
-            memo = cursor.getString(8);
+        if (bucketListId == NO_ID) {
+            PrintToast("버킷리스트 조회 실패");
+            Intent intent = new Intent(DetailActivity.this, MainActivity.class);
+            startActivity(intent);
+            finish();
         }
-        cursor.close();  // cursor 닫기
+        start = System.currentTimeMillis();
+        try {
+            validateLoginState();  // 로그인 상태 확인
 
-        // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-        cursor = sqlDB.rawQuery("SELECT category_name FROM category WHERE category_number = " + category_number + ";", null);
+            bucketListApiService = client.create(BucketListApiService.class);
+            Call<ResultDto> call = bucketListApiService.getBucketListDetail(loginUserId, bucketListId);
 
-        while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
-            category_name = cursor.getString(0);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Response<ResultDto> response = call.execute();
+                        ResultDto result = response.body();
+
+                        if (result != null && response.isSuccessful()) {
+                            Object resultData = result.getData();  // 응답 데이터
+
+                            // 응답 데이터를 findDetailResponseDto로 convert
+                            BucketListDto.FindDetailResponseDto findDetailResponseDto = new Gson().fromJson(new Gson().toJson(resultData), BucketListDto.FindDetailResponseDto.class);
+
+                            categoryId = findDetailResponseDto.getId();
+                            title = findDetailResponseDto.getTitle();
+                            registered_date = findDetailResponseDto.getRegisteredDate();
+                            importance = findDetailResponseDto.getImportance();
+                            achievement_rate = findDetailResponseDto.getAchievementRate();
+                            achievement_date = findDetailResponseDto.getAchievementDate();
+                            target_date = findDetailResponseDto.getTargetDate();
+                            memo = findDetailResponseDto.getMemo();
+                            category_name = findDetailResponseDto.getCategoryName();
+
+                            Log.i("Load BucketList Detail", "SUCCESS");
+                        } else {
+                            Log.i("Load BucketList Detail", "FAIL");
+                            Log.e("Response error", response.toString());
+
+                            // 에러 바디를 ErrorResultDto로 convert
+                            Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                            ErrorResultDto error = errorConverter.convert(response.errorBody());
+
+                            Log.e("ErrorResultDto", error.toString());
+
+                            int errorStatus = error.getStatus();  // 에러 상태
+                            String errorMessage = error.getMessage();  // 에러 메시지
+
+                            if (errorMessage != null) {  // 개발자가 설정한 오류
+                                PrintToast(errorMessage);  // 에러 메시지 출력
+                                if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
+                                    logout();
+                                }
+                            } else {  // 기타 오류
+                                if (errorStatus >= 500) {  // 서버 오류
+                                    PrintToast("Server Error");
+                                } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                    PrintToast("Client Error");
+                                }
+                            }
+                        }
+                    } catch (IOException e) {
+                        Log.e("Throwable error", e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+            end = System.currentTimeMillis();
+            Thread.sleep((end - start) * 100);
+
+        } catch (UnauthorizedAccessException e) {  // 인증되지 않은 사용자가 접근할 때 발생하는 예외
+            PrintToast(e.getMessage());  // 에러 메시지 출력
+            logout();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        cursor.close();  // cursor 닫기
-
-        sqlDB.close();  // DB 닫기
 
         // 값 등록
-        crtDate.setText("등록일 " + creation_date);
+        bName.setText(title);
+        d_Day.setText(inIntent.getStringExtra("dDay"));  // 디데이 값 받기
+        crtDate.setText("등록일 " + registered_date);
         rBar.setRating(importance);
         cName.setText("[" + category_name + "]");
         pBar.setProgress(achievement_rate);
@@ -112,10 +194,10 @@ public class DetailActivity extends AppCompatActivity {
         memoTv.setBackgroundColor(Color.WHITE);
 
         // 달성일이 null이면 위젯 없애기
-        if (TextUtils.isEmpty(completion_date))
+        if (TextUtils.isEmpty(achievement_date))
             achvdtTv.setVisibility(View.GONE);
         else
-            achvdtTv.setText("달성일 [" + completion_date + "]");
+            achvdtTv.setText("달성일 [" + achievement_date + "]");
 
         // 달성 했으면 버킷리스트 명 흐리게 표시
         if (achievement_rate == 100) {
@@ -188,6 +270,26 @@ public class DetailActivity extends AppCompatActivity {
         }
         return false;
     }
+
+
+    //**************************** 로그인되어있나 확인하는 validateLoginState() 함수 정의 ********************************
+    public void validateLoginState() throws UnauthorizedAccessException {
+        if (loginUserId == NO_ID)
+            throw new UnauthorizedAccessException("로그인이 필요합니다");
+    }
+
+
+    //**************************** 로그아웃을 위한 logout() 함수 정의 ********************************
+    public void logout() {
+        // SharedPreferences에서 로그인한 User ID 제거
+        MySharedPreferences.removeOne(getApplicationContext(), PREFERENCE_FILE_USER, "loginUserId");
+
+        // 명시적 인텐트를 사용하여 LoginActivity 호출
+        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
 
     //**************************** 커스텀 토스트 메세지 출력을 위한 PrintToast() 함수 정의 ********************************
     public void PrintToast(String msg) {

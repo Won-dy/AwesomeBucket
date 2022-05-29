@@ -10,6 +10,7 @@ import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static javax.persistence.FetchType.LAZY;
 
@@ -42,6 +43,15 @@ public class BucketList extends BaseEntity {  // 버킷리스트
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "category_id")
     private Category category;  // 카테고리
+
+
+    @Transient
+    private LocalDateTime registeredDate;  // 등록일시
+
+    public BucketList(LocalDateTime registeredDate, LocalDateTime lastModifiedDate) {
+        super(registeredDate, lastModifiedDate);
+        this.registeredDate = registeredDate;
+    }
 
     @Builder
     public BucketList(String title, String memo, int importance, int achievementRate, LocalDate targetDate, LocalDate achievementDate, boolean isDeleted, User user, Category category) {

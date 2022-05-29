@@ -83,7 +83,6 @@ public class MainActivity<T> extends AppCompatActivity {
     String seletedCategoryName;  // 카테고리 필터 스피너에서 선택 된 카테고리 이름
     String seletedSorting;  // 정렬 필터 스피너에서 선택된 정렬 기준
     boolean isMultipleFiltering;  // 다중 필터링 여부
-    int category_num, sltCtgr_flag = 0;
     int achievement_rate, category_number;
     float importance;
     long bucketListId;
@@ -360,17 +359,13 @@ public class MainActivity<T> extends AppCompatActivity {
                     int position = rv.getChildAdapterPosition(child);
 
                     // ViewHolder를 얻어와 itemView에 정의된 뷰를 inflation(객체화)하여 뷰 참조 후 뷰 객체 변수에 인플레이팅된 뷰를 할당
-                    TextView bName = rv.getChildViewHolder(child).itemView.findViewById(R.id.bucketName);
-                    TextView bDday = rv.getChildViewHolder(child).itemView.findViewById(R.id.dDay);
-                    bucketName = bName.getText().toString();
-                    dDay = bDday.getText().toString();
-                    // Toast.makeText(getApplicationContext(), bucketName+position+"번 째 항목 선택", Toast.LENGTH_SHORT).show();
-
+                    TextView bucketListId = rv.getChildViewHolder(child).itemView.findViewById(R.id.bucketListId);
+                    TextView dDdayTv = rv.getChildViewHolder(child).itemView.findViewById(R.id.dDay);
                     // 명시적 인텐트를 사용하여 DetailActivity 호출
-                    // Hash 구조(키, 값)로 데이터를 저장하여 bucketName, dDay 값 전달
+                    // Hash 구조(키, 값)로 데이터를 저장하여 버킷리스트 ID, 디데이 값 전달
                     Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
-                    intent.putExtra("name", bucketName);
-                    intent.putExtra("dDay", dDay);
+                    intent.putExtra("bucketListId", Long.valueOf(bucketListId.getText().toString()));
+                    intent.putExtra("dDay", dDdayTv.getText().toString());
                     startActivity(intent);
                 }
                 return false;

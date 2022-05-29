@@ -22,4 +22,8 @@ public interface BucketListApiService {
     // 버킷리스트 등록 API
     @POST("buckets")
     Call<ResultDto> createBucketList(@Body BucketListDto.CreateUpdateRequestDto createUpdateRequestDto);
+
+    // 버킷리스트 상세조회 API
+    @GET("users/{userId}/buckets/{bucketId}")
+    Call<ResultDto> getBucketListDetail(@Path("userId") Long userId, @Path("bucketId") Long bucketId);
 }

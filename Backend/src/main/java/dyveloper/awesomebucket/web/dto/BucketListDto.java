@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.ToString;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class BucketListDto {
 
@@ -20,6 +21,23 @@ public class BucketListDto {
         private int importance;  // 중요도
         private int achievementRate;  // 달성률
         private LocalDate targetDate;  // 목표일
+        private String categoryName;  // 카테고리명
+    }
+
+    /**
+     * 버킷리스트 상세 조회 DTO
+     */
+    @Getter
+    @AllArgsConstructor
+    public static class FindDetailResponseDto {
+        private Long id;  // 버킷리스트 ID
+        private String title;  // 버킷리스트명
+        private LocalDateTime registeredDate;  // 등록일시
+        private int importance;  // 중요도
+        private int achievementRate;  // 달성률
+        private LocalDate achievementDate;  // 달성일
+        private LocalDate targetDate;  // 목표일
+        private String memo;  // 메모
         private String categoryName;  // 카테고리명
     }
 

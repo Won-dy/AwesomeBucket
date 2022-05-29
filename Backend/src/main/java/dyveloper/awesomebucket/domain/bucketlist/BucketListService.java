@@ -21,6 +21,13 @@ public class BucketListService {
     private final CategoryService categoryService;
     private final CategoryRepository categoryRepository;
 
+    // 버킷리스트 상세조회
+    public BucketListDto.FindDetailResponseDto getBucketListDetail(User user, Long bucketListId) {
+        BucketList bucketList = bucketListRepository.findByIdAndUserAndIsDeleted(bucketListId, user, false).orElseThrow(NotFoundResourceException::new);
+        return new BucketListDto.FindDetailResponseDto(bucketList.getId(), bucketList.getTitle(), bucketList.getRegisteredDate(), bucketList.getImportance(), bucketList.getAchievementRate(),
+                bucketList.getAchievementDate(), bucketList.getTargetDate(), bucketList.getMemo(), bucketList.getCategory().getName());
+    }
+
     // 버킷리스트 등록
     public void createBucketList(User user, BucketListDto.CreateUpdateRequestDto createUpdateRequestDto) {
         Category category = categoryService.findByUserAndName(user, createUpdateRequestDto.getCategoryName());  // 카테고리 조회
