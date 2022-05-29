@@ -84,7 +84,7 @@ public class AddActivity extends AppCompatActivity {
     int flag;
     int addSuccess = 0, editSuccess = 0;
     int category_number, achievement_rate, bucket_number;
-    float importance;
+    float importance = 1;
     String title, memo, target_date, completion_date, ctgr_name, bName, category_name, sltCtgr, beforeEdit;
     long pressedTime = 0; //'뒤로가기' 버튼 클릭했을 때의 시간
 
