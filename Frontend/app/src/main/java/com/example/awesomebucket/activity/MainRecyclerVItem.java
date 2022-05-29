@@ -1,6 +1,7 @@
 package com.example.awesomebucket.activity;
 
 public class MainRecyclerVItem {  // 하나의 행에 대한 정보를 담을 클래스
+    public long bucketListId;
     public String bucketName;
     public int pB;
     public String achvRate;
@@ -8,7 +9,8 @@ public class MainRecyclerVItem {  // 하나의 행에 대한 정보를 담을 �
     public String dDay;
     boolean fin;  // 달성 여부
 
-    public MainRecyclerVItem(String bucketName, int pB, String achvRate, float rB, String dDay, boolean fin) {
+    public MainRecyclerVItem(long bucketListId, String bucketName, int pB, String achvRate, float rB, String dDay, boolean fin) {
+        this.bucketListId = bucketListId;
         this.bucketName = bucketName;
         this.pB = pB;
         this.achvRate = achvRate;

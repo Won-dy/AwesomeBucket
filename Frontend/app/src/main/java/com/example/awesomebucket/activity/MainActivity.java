@@ -86,6 +86,7 @@ public class MainActivity<T> extends AppCompatActivity {
     int category_num, sltCtgr_flag = 0;
     int achievement_rate, category_number;
     float importance;
+    long bucketListId;
     long pressedTime = 0; //'뒤로가기' 버튼 클릭했을 때의 시간
     long start, end; // 함수 실행시간 측정을 위한 변수
 
@@ -490,6 +491,7 @@ public class MainActivity<T> extends AppCompatActivity {
     public void addRecyclerViewItemList(ArrayList<BucketListDto.FindResponseDto> bucketLists) {
         List = new ArrayList<>();
         for (BucketListDto.FindResponseDto bucketList : bucketLists) {
+            bucketListId = bucketList.getId();
             title = bucketList.getTitle();
             achievement_rate = bucketList.getAchievementRate();
             importance = (float) bucketList.getImportance();
@@ -497,9 +499,9 @@ public class MainActivity<T> extends AppCompatActivity {
             d_day = calDate(target_date);  // 디데이 계산 함수
 
             if (achievement_rate == 100)
-                List.add(new MainRecyclerVItem(title, achievement_rate, achievement_rate + "%", importance, d_day, true));  // ArrayList 값 넣기
+                List.add(new MainRecyclerVItem(bucketListId, title, achievement_rate, achievement_rate + "%", importance, d_day, true));  // ArrayList 값 넣기
             else
-                List.add(new MainRecyclerVItem(title, achievement_rate, achievement_rate + "%", importance, d_day, false));  // ArrayList 값 넣기
+                List.add(new MainRecyclerVItem(bucketListId, title, achievement_rate, achievement_rate + "%", importance, d_day, false));  // ArrayList 값 넣기
         }
     }
 

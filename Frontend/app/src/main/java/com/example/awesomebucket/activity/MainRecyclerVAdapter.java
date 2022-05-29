@@ -23,7 +23,7 @@ public class MainRecyclerVAdapter extends RecyclerView.Adapter<RecyclerView.View
 
     // RecyclerView의 행을 표시하는 view를 저장하는 뷰홀더 클래스
     public static class MyViewHolder extends RecyclerView.ViewHolder {
-        TextView bucketName, achvRate, dDay;
+        TextView bucketListId, bucketName, achvRate, dDay;
         ProgressBar pB;
         RatingBar rB;
 
@@ -32,6 +32,7 @@ public class MainRecyclerVAdapter extends RecyclerView.Adapter<RecyclerView.View
             super(view);
             // findViewById() 메소드를 사용하여 view에 정의된 뷰를 inflation(객체화)하여 뷰 참조
             // 뷰 객체 변수에 인플레이팅된 뷰를 할당
+            bucketListId = view.findViewById(R.id.bucketListId);
             bucketName = view.findViewById(R.id.bucketName);
             pB = view.findViewById(R.id.pB);
             achvRate = view.findViewById(R.id.achvRate);
@@ -69,6 +70,7 @@ public class MainRecyclerVAdapter extends RecyclerView.Adapter<RecyclerView.View
 
         // 각 뷰 홀더는 뷰를 사용하여 단일 항목을 표시함
         // 뷰 홀더를 데이터에 바인딩하여 특정 위치에 할당
+        myViewHolder.bucketListId.setText(String.valueOf(List.get(position).bucketListId));
         myViewHolder.bucketName.setText(List.get(position).bucketName);
         myViewHolder.pB.setProgress(List.get(position).pB);
         myViewHolder.achvRate.setText(List.get(position).achvRate);
