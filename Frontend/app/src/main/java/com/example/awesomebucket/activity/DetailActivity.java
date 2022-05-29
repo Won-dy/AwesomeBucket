@@ -5,7 +5,6 @@ import static com.example.awesomebucket.MyConstant.PREFERENCE_FILE_USER;
 
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -25,7 +24,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.awesomebucket.MyConstant;
-import com.example.awesomebucket.MyDBHelper;
 import com.example.awesomebucket.MySharedPreferences;
 import com.example.awesomebucket.R;
 import com.example.awesomebucket.api.APIClient;
@@ -225,8 +223,7 @@ public class DetailActivity extends AppCompatActivity {
                 Intent intent = new Intent(DetailActivity.this, AddActivity.class);
                 // Hash 구조(키, 값)로 데이터를 저장하여 값 전달
                 intent.putExtra("flag", 2);
-                intent.putExtra("title", title);
-                intent.putExtra("category_name", category_name);
+                intent.putExtra("bucketListId", bucketListId);
                 startActivity(intent);
                 finish();
                 return true;

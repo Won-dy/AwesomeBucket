@@ -29,6 +29,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.awesomebucket.MyConstant;
 import com.example.awesomebucket.MyDBHelper;
 import com.example.awesomebucket.MySharedPreferences;
 import com.example.awesomebucket.R;
@@ -80,13 +81,15 @@ public class AddActivity extends AppCompatActivity {
     BucketListApiService bucketListApiService;
 
     Long loginUserId;
+    long bucketListId;
     int y, m, d;
     int flag;
     int addSuccess = 0, editSuccess = 0;
     int category_number, achievement_rate, bucket_number;
     float importance = 1;
-    String title, memo, target_date, completion_date, ctgr_name, bName, category_name, sltCtgr, beforeEdit;
+    String title, memo, target_date, achievement_date, ctgr_name, category_name, sltCtgr, beforeEdit;
     long pressedTime = 0; //'뒤로가기' 버튼 클릭했을 때의 시간
+    long start, end; // 함수 실행시간 측정을 위한 변수
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -124,9 +127,7 @@ public class AddActivity extends AppCompatActivity {
         // intent를 통해 데이터 값을 전달 받음
         Intent inIntent = getIntent();
         flag = inIntent.getIntExtra("flag", 0);  // 추가 버튼을 클릭하여 화면에 연결된 것인지 수정 버튼을 클릭하여 화면에 연결된 것인지를 판별
-        bName = inIntent.getStringExtra("title");
-        category_name = inIntent.getStringExtra("category_name");
-        beforeEdit = bName;
+        bucketListId = inIntent.getLongExtra("bucketListId", MyConstant.NO_ID);  // 버킷리스트 ID 값 받기
 
         //**************************** 달성률이 100인 경우 달성일 입력 폼 띄우기 ********************************
 
@@ -161,32 +162,92 @@ public class AddActivity extends AppCompatActivity {
         }
         //**************************** 수정 버튼을 클릭하여 화면에 연결된 경우 DB에 저장된 값들을 각 입력란에 띄움 ********************************
         if (flag == 2) {
-
-            sqlDB = myDBHelper.getReadableDatabase();  // 읽기용 DB 열기
-
-            Cursor cursor;  // 조회된 data set을 담고있는 결과 집합인 cursor 선언
-            // 쿼리의 결과 값을 리턴하는 rawQuery메소드를 이용하여 cursor에 저장
-            cursor = sqlDB.rawQuery("SELECT * FROM bucket WHERE title = '" + bName + "';", null);
-
-            while (cursor.moveToNext()) {  // 현재 커서의 다음 행으로 이동할 수 있을 때 까지 반복하여 데이터 operating
-                category_number = cursor.getInt(2);
-                importance = cursor.getInt(3);
-                achievement_rate = cursor.getInt(4);
-                target_date = cursor.getString(5);
-                completion_date = cursor.getString(6);
-                memo = cursor.getString(8);
+            if (bucketListId == NO_ID) {
+                PrintToast("버킷리스트 조회 실패");
+                Intent intent = new Intent(AddActivity.this, MainActivity.class);
+                startActivity(intent);
+                finish();
             }
-            cursor.close();  // cursor 닫기
-            sqlDB.close();  // DB 닫기
+
+            start = System.currentTimeMillis();
+            try {
+                validateLoginState();  // 로그인 상태 확인
+
+                bucketListApiService = client.create(BucketListApiService.class);
+                Call<ResultDto> call = bucketListApiService.getBucketListDetail(loginUserId, bucketListId);
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Response<ResultDto> response = call.execute();
+                            ResultDto result = response.body();
+
+                            if (result != null && response.isSuccessful()) {
+                                Object resultData = result.getData();  // 응답 데이터
+
+                                // 응답 데이터를 findDetailResponseDto로 convert
+                                BucketListDto.FindDetailResponseDto findDetailResponseDto = new Gson().fromJson(new Gson().toJson(resultData), BucketListDto.FindDetailResponseDto.class);
+
+                                category_name = findDetailResponseDto.getCategoryName();
+                                title = findDetailResponseDto.getTitle();
+                                memo = findDetailResponseDto.getMemo();
+                                importance = findDetailResponseDto.getImportance();
+                                achievement_rate = findDetailResponseDto.getAchievementRate();
+                                target_date = findDetailResponseDto.getTargetDate();
+                                achievement_date = findDetailResponseDto.getAchievementDate();
+
+                                Log.i("Load BucketList Edit Form", "SUCCESS");
+                            } else {
+                                Log.i("Load BucketList Edit Form", "FAIL");
+                                Log.e("Response error", response.toString());
+
+                                // 에러 바디를 ErrorResultDto로 convert
+                                Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                                ErrorResultDto error = errorConverter.convert(response.errorBody());
+
+                                Log.e("ErrorResultDto", error.toString());
+
+                                int errorStatus = error.getStatus();  // 에러 상태
+                                String errorMessage = error.getMessage();  // 에러 메시지
+
+                                if (errorMessage != null) {  // 개발자가 설정한 오류
+                                    PrintToast(errorMessage);  // 에러 메시지 출력
+                                    if (errorStatus == 401) {  // 인증되지 않은 사용자가 접근
+                                        logout();
+                                    }
+                                } else {  // 기타 오류
+                                    if (errorStatus >= 500) {  // 서버 오류
+                                        PrintToast("Server Error");
+                                    } else if (errorStatus >= 400) {  // 클라이언트 오류
+                                        PrintToast("Client Error");
+                                    }
+                                }
+                            }
+                        } catch (IOException e) {
+                            Log.e("Throwable error", e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+                end = System.currentTimeMillis();
+                Thread.sleep((end - start) * 100);
+
+            } catch (UnauthorizedAccessException e) {  // 인증되지 않은 사용자가 접근할 때 발생하는 예외
+                PrintToast(e.getMessage());  // 에러 메시지 출력
+                logout();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
             // DB에 저장된 값들을 각 입력란에 띄움
             cNameEt.setText(category_name);
-            nameEt.setText(bName);
+            nameEt.setText(title);
             memoEt.setText(memo);
             rB.setRating(importance);
             achvEt.setText(String.valueOf(achievement_rate));
             tgdEt.setText(target_date);
-            achvdEt.setText(completion_date);
+            achvdEt.setText(achievement_date);
         }
 
         //**************************** 카테고리 선택 버튼을 클릭했을 때 동작하는 이벤트 처리 ********************************
@@ -478,9 +539,9 @@ public class AddActivity extends AppCompatActivity {
 
                 int isEmpty = 0;  // 달성일 입력 안되었으면 0, 입력 되었으면 1
                 if (achvDate.getBytes().length <= 0) {  // 달성일 빈칸이면
-                    completion_date = null;  // null로 설정
+                    achievement_date = null;  // null로 설정
                 } else {
-                    completion_date = achvDate;  // 입력 값으로 설정
+                    achievement_date = achvDate;  // 입력 값으로 설정
                     isEmpty = 1;
                 }
 
@@ -499,7 +560,7 @@ public class AddActivity extends AppCompatActivity {
                     //**************************** 추가를 위해 해당 액티비티를 접근했을 경우 ********************************
                     if (flag == 1) {
                         bucketListApiService = client.create(BucketListApiService.class);
-                        Call<ResultDto> call = bucketListApiService.createBucketList(new BucketListDto.CreateUpdateRequestDto(loginUserId, categoryName, title, memo, (int) importance, achievement_rate, target_date, completion_date));
+                        Call<ResultDto> call = bucketListApiService.createBucketList(new BucketListDto.CreateUpdateRequestDto(loginUserId, categoryName, title, memo, (int) importance, achievement_rate, target_date, achievement_date));
                         call.enqueue(new Callback<ResultDto>() {
                             @Override
                             public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
@@ -569,13 +630,13 @@ public class AddActivity extends AppCompatActivity {
                                 // 달성일 null로 설정
                                 case 0:
                                     sqlDB.execSQL("UPDATE bucket SET title = '" + title + "', category_number = " + category_number + ", importance = " + importance + ", " +
-                                            "achievement_rate = " + achievement_rate + ", target_date = '" + target_date + "', completion_date = " + completion_date + ", " +
+                                            "achievement_rate = " + achievement_rate + ", target_date = '" + target_date + "', completion_date = " + achievement_date + ", " +
                                             "memo = '" + memo + "' WHERE bucket_number = " + bucket_number + ";");
                                     break;
                                 // 달성일 입력값으로 설정
                                 case 1:
                                     sqlDB.execSQL("UPDATE bucket SET title = '" + title + "', category_number = " + category_number + ", importance = " + importance + ", " +
-                                            "achievement_rate = " + achievement_rate + ", target_date = '" + target_date + "', completion_date = '" + completion_date + "', " +
+                                            "achievement_rate = " + achievement_rate + ", target_date = '" + target_date + "', completion_date = '" + achievement_date + "', " +
                                             "memo = '" + memo + "' WHERE bucket_number = " + bucket_number + ";");
                             }
                             sqlDB.close();
