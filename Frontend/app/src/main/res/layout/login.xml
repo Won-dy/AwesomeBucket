@@ -9,6 +9,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingBottom="30dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -30,13 +31,13 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="50dp"
-            android:padding="15dp"
             android:background="@drawable/edittext_custom"
             android:hint="이메일"
             android:inputType="textEmailAddress"
-            android:textSize="18sp"
-            android:textCursorDrawable="@color/purple_200"
+            android:padding="15dp"
             android:textColorHighlight="@color/purple_200"
+            android:textCursorDrawable="@color/purple_200"
+            android:textSize="18sp"
             app:layout_constraintLeft_toLeftOf="@id/guidelineLeft"
             app:layout_constraintRight_toRightOf="@id/guidelineRight"
             app:layout_constraintTop_toBottomOf="@id/logo" />
@@ -46,14 +47,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="7dp"
-            android:padding="15dp"
             android:background="@drawable/edittext_custom"
             android:hint="비밀번호"
             android:inputType="textPassword"
             android:maxLength="20"
-            android:textSize="18sp"
-            android:textCursorDrawable="@color/purple_200"
+            android:padding="15dp"
             android:textColorHighlight="@color/purple_200"
+            android:textCursorDrawable="@color/purple_200"
+            android:textSize="18sp"
             app:layout_constraintLeft_toLeftOf="@id/guidelineLeft"
             app:layout_constraintRight_toRightOf="@id/guidelineRight"
             app:layout_constraintTop_toBottomOf="@+id/idET" />
@@ -121,6 +122,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="25dp"
             android:clickable="true"
+            android:focusable="true"
             android:text="회원가입"
             android:textColor="#B2FF59"
             android:textSize="17sp"
@@ -129,30 +131,18 @@
             app:layout_constraintTop_toBottomOf="@id/cl" />
 
         <TextView
-            android:id="@+id/findIdBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:clickable="true"
-            android:text="아이디 찾기"
-            android:textColor="#F8BBD0"
-            android:textSize="17sp"
-            app:layout_constraintLeft_toLeftOf="@id/guidelineLeft"
-            app:layout_constraintRight_toRightOf="@id/guidelineRight"
-            app:layout_constraintTop_toBottomOf="@id/joinBtn" />
-
-        <TextView
             android:id="@+id/findPwBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="25dp"
             android:clickable="true"
+            android:focusable="true"
             android:text="비밀번호 찾기"
             android:textColor="#F8BBD0"
             android:textSize="17sp"
             app:layout_constraintLeft_toLeftOf="@id/guidelineLeft"
             app:layout_constraintRight_toRightOf="@id/guidelineRight"
-            app:layout_constraintTop_toBottomOf="@id/findIdBtn" />
+            app:layout_constraintTop_toBottomOf="@id/joinBtn" />
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guidelineLeft"
