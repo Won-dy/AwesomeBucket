@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bgColor"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/emailTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="이 메 일"
+        android:textColor="@color/black"
+        android:textSize="19sp"
+        app:layout_constraintBottom_toBottomOf="@+id/l1"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/l1" />
+
+    <LinearLayout
+        android:id="@+id/l1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <EditText
+            android:id="@+id/emailET"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="4"
+            android:inputType="textEmailAddress"
+            android:paddingLeft="75dp"
+            android:textColorHighlight="@color/purple_200"
+            android:textCursorDrawable="@color/purple_200"
+            app:layout_constraintLeft_toRightOf="@+id/emailTV"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/sendCodeBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="1.1"
+            android:backgroundTint="@color/lightpurple"
+            android:text="인증번호\n발송"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/codeTV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.3"
+        android:text="인증번호"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="@+id/l2"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/l2" />
+
+    <LinearLayout
+        android:id="@+id/l2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/l1">
+
+        <EditText
+            android:id="@+id/codeET"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="4"
+            android:maxLength="10"
+            android:paddingLeft="75dp"
+            android:textColorHighlight="@color/purple_200"
+            android:textCursorDrawable="@color/purple_200"
+            app:layout_constraintLeft_toRightOf="@+id/codeTV"
+            app:layout_constraintTop_toBottomOf="@id/emailET" />
+
+        <Button
+            android:id="@+id/codeBtn"
+            android:layout_width="0dp"
+            android:layout_height="45dp"
+            android:layout_gravity="center"
+            android:layout_weight="1.1"
+            android:backgroundTint="@color/lightpurple"
+            android:text="인증"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/emailET" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/newPasswordTV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.3"
+        android:text="새 비밀번호"
+        android:textColor="@color/lightpurple"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="@+id/newPasswordET"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/newPasswordET" />
+
+    <EditText
+        android:id="@+id/newPasswordET"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:focusable="false"
+        android:hint="숫자, 영문 조합 8~20자"
+        android:inputType="textPassword"
+        android:maxLength="20"
+        android:paddingLeft="95dp"
+        android:textColorHighlight="@color/purple_200"
+        android:textCursorDrawable="@color/purple_200"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/l2" />
+
+    <Button
+        android:id="@+id/resetPasswordBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:backgroundTint="#E1E1E1"
+        android:clickable="false"
+        android:paddingVertical="15dp"
+        android:text="비밀번호 재설정"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/newPasswordET" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
