@@ -13,5 +13,6 @@
     <color name="bgColor">#F8F5FB</color>
     <color name="red">#C62828</color>
 
+    <color name="lightpurple">#DCBFFF</color>
     <color name="pinkpurple">#BC1BD8</color>
 </resources>
