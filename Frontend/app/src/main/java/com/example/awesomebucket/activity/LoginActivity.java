@@ -35,7 +35,7 @@ import retrofit2.Retrofit;
 public class LoginActivity extends Activity {
 
     Button loginBtn;
-    TextView idET, pwET;
+    TextView idET, pwET, joinBtn, findPwBtn;
 
     Retrofit client = APIClient.getClient();
     LoginApiService loginApiService;
@@ -55,6 +55,8 @@ public class LoginActivity extends Activity {
         loginBtn = findViewById(R.id.loginBtn);
         idET = findViewById(R.id.idET);
         pwET = findViewById(R.id.pwET);
+        joinBtn = findViewById(R.id.joinBtn);
+        findPwBtn = findViewById(R.id.findPwBtn);
 
         // toast.xml을 View로 inflating하고 뷰 참조 후 뷰 객체 변수에 인플레이팅된 뷰를 할당
         toast = new Toast(getApplicationContext());
@@ -138,6 +140,26 @@ public class LoginActivity extends Activity {
                 } catch (NoInputDataException e) {
                     PrintToast(e.getMessage());
                 }
+            }
+        });
+
+        //**************************** 회원가입 버튼을 클릭했을 때 동작하는 이벤트 처리 ********************************
+        joinBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // 회원가입 화면으로 이동
+                Intent intent = new Intent(getApplicationContext(), SignupActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        //**************************** 비밀번호 찾기 버튼을 클릭했을 때 동작하는 이벤트 처리 ********************************
+        findPwBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // 비밀번호 찾기 화면으로 이동
+                Intent intent = new Intent(getApplicationContext(), FindPwActivity.class);
+                startActivity(intent);
             }
         });
     }
