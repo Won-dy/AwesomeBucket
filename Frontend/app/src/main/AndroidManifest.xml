@@ -44,6 +44,10 @@
             android:name="com.example.awesomebucket.activity.SignupActivity"
             android:label="회원가입 액티비티"
             android:parentActivityName="com.example.awesomebucket.activity.MainActivity" />
+        <activity
+            android:name="com.example.awesomebucket.activity.FindPwActivity"
+            android:label="비밀번호 찾기 액티비티"
+            android:parentActivityName="com.example.awesomebucket.activity.MainActivity" />
     </application>
 
 </manifest>
