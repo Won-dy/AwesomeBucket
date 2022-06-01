@@ -5,6 +5,8 @@ import dyveloper.awesomebucket.domain.login.LoginService;
 import dyveloper.awesomebucket.domain.user.User;
 import dyveloper.awesomebucket.domain.user.UserService;
 import dyveloper.awesomebucket.exception.BadRequestURIException;
+import dyveloper.awesomebucket.exception.DuplicateResourceException;
+import dyveloper.awesomebucket.exception.NotFoundResourceException;
 import dyveloper.awesomebucket.web.dto.ErrorResultDto;
 import dyveloper.awesomebucket.web.dto.ResultDto;
 import dyveloper.awesomebucket.web.dto.UserDto;
@@ -48,10 +50,15 @@ public class LoginController {
     @PostMapping("/email-authenticate")
     public ResponseEntity emailAuthenticate(@RequestBody UserDto.EmailAuthRequestDto emailAuthRequestDto) {
         try {
+            userService.isJoined(emailAuthRequestDto.getEmail(), emailAuthRequestDto.getType());  // 가입 여부 확인
             String code = emailSendService.sendCode(emailAuthRequestDto.getEmail(), emailAuthRequestDto.getType());  // 인증번호 발송
             UserDto.EmailAuthResponseDto data = new UserDto.EmailAuthResponseDto(code);
 
             return new ResponseEntity<>(new ResultDto(200, "인증번호 발송 성공", data), HttpStatus.OK);
+        } catch (DuplicateResourceException dre) {
+            return new ResponseEntity<>(new ErrorResultDto(400, "Email Already Exists", dre.getMessage()), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundResourceException nfre) {
+            return new ResponseEntity<>(new ErrorResultDto(404, "Not Found Email", nfre.getMessage()), HttpStatus.NOT_FOUND);
         } catch (BadRequestURIException e) {
             return new ResponseEntity<>(new ErrorResultDto(400, "Bad Request: " + e.getMessage(), "잘못된 요청입니다"), HttpStatus.BAD_REQUEST);
         }

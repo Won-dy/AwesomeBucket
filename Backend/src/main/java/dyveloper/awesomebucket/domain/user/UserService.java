@@ -1,6 +1,7 @@
 package dyveloper.awesomebucket.domain.user;
 
 import dyveloper.awesomebucket.exception.DuplicateResourceException;
+import dyveloper.awesomebucket.exception.NotFoundResourceException;
 import dyveloper.awesomebucket.exception.UnauthorizedAccessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,19 @@ public class UserService {
         }
         User user = User.builder().email(email).password(password).name(name).build();
         userRepository.save(user);
+    }
+
+    // 가입 여부 확인
+    public void isJoined(String email, String type) {
+        User user = findByEmail(email);
+
+        if (type.equals("join") && user != null) {  // 이미 존재하는 이메일로 회원가입 시도
+            throw new DuplicateResourceException("이미 가입된 이메일입니다");
+        }
+
+        if (type.equals("findPw") && user == null) {  // 존재하지 않는 이메일로 비밀번호 변경 시도
+            throw new NotFoundResourceException("가입된 이메일이 없습니다");
+        }
     }
 
 }
