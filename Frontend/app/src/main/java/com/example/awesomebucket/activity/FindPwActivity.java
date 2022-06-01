@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -14,6 +16,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.awesomebucket.MyConstant;
 import com.example.awesomebucket.R;
 import com.example.awesomebucket.api.APIClient;
 import com.example.awesomebucket.api.LoginApiService;
@@ -24,6 +27,8 @@ import com.example.awesomebucket.exception.NoInputDataException;
 import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -47,7 +52,7 @@ public class FindPwActivity extends AppCompatActivity {
     Toast toast;
 
     String authenticationCode;
-    String email, inputCode;
+    String email, inputCode, newPassword;
 
     @SuppressLint("ResourceAsColor")
     @Override
@@ -78,6 +83,12 @@ public class FindPwActivity extends AppCompatActivity {
 
                     if (email.getBytes().length <= 0)
                         throw new NoInputDataException("이메일을 입력하세요");
+
+                    String checkEmailResult = checkEmail(email);// 이메일 패턴 체크
+                    if (!checkEmailResult.equals("PASS")) {  // 이메일 패턴 체크 실패
+                        PrintToast(checkEmailResult);
+                        return;
+                    }
 
                     loginApiService = client.create(LoginApiService.class);
                     Call<ResultDto> call = loginApiService.login(new UserDto.EmailAuthRequestDto("findPw", email));
@@ -166,6 +177,76 @@ public class FindPwActivity extends AppCompatActivity {
             }
         });
 
+        newPasswordET.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                // 새 비밀번호가 입력되었으면 비밀번호 재설정 버튼 활성화
+                if (editable.toString().trim().getBytes().length >= 8) {
+                    resetPasswordBtn.setClickable(true);
+                    resetPasswordBtn.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.purple)));
+                } else {
+                    resetPasswordBtn.setClickable(false);
+                    resetPasswordBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E1E1E1")));
+                }
+            }
+        });
+
+        resetPasswordBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                email = emailET.getText().toString().trim();
+                newPassword = newPasswordET.getText().toString();
+
+                String checkPasswordResult = checkPassword(newPassword);// 비밀번호 패턴 체크
+
+                // 비밀번호 패턴 체크 실패
+                if (!checkPasswordResult.equals("PASS")) {
+                    PrintToast(checkPasswordResult);
+                    return;
+                }
+
+            }
+        });
+
+    }
+
+
+    //**************************** 이메일 패턴 체크를 위한 checkEmail() 함수 정의 *******************************
+    public String checkEmail(String email) {
+        Matcher matcher;  // 정규식 검사 객체
+
+        // 정규식 체크
+        matcher = Pattern.compile(MyConstant.emailPattern).matcher(email);
+        if (!matcher.matches())
+            return "이메일 형식이 올바르지 않습니다";
+
+        return "PASS";
+    }
+
+
+    //**************************** 비밀번호 패턴 체크를 위한 checkPassword() 함수 정의 *******************************
+    public String checkPassword(String password) {
+        Matcher matcher;  // 정규식 검사 객체
+
+        // 공백 체크
+        matcher = Pattern.compile(MyConstant.blankPattern).matcher(password);
+        if (matcher.find())
+            return "비밀번호는 공백을 포함할 수 없습니다";
+
+        // 정규식 체크
+        matcher = Pattern.compile(MyConstant.pwPattern).matcher(password);
+        if (!matcher.matches())
+            return "비밀번호는 영문, 숫자를 포함해야합니다";
+
+        return "PASS";
     }
 
 
