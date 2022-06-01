@@ -1,8 +1,10 @@
 package dyveloper.awesomebucket.web.controller;
 
+import dyveloper.awesomebucket.domain.login.EmailSendService;
 import dyveloper.awesomebucket.domain.login.LoginService;
 import dyveloper.awesomebucket.domain.user.User;
 import dyveloper.awesomebucket.domain.user.UserService;
+import dyveloper.awesomebucket.exception.BadRequestURIException;
 import dyveloper.awesomebucket.web.dto.ErrorResultDto;
 import dyveloper.awesomebucket.web.dto.ResultDto;
 import dyveloper.awesomebucket.web.dto.UserDto;
@@ -19,6 +21,7 @@ public class LoginController {
 
     private final LoginService loginService;
     private final UserService userService;
+    private final EmailSendService emailSendService;
 
     @PostMapping("login")
     public ResponseEntity login(@RequestBody UserDto.LoginRequestDto userLoginDto) {
@@ -36,6 +39,21 @@ public class LoginController {
             UserDto.LoginResponseDto data = new UserDto.LoginResponseDto(id);
 
             return new ResponseEntity<>(new ResultDto(200, "Login Success", data), HttpStatus.OK);
+        }
+    }
+
+    /**
+     * 이메일 인증 API
+     */
+    @PostMapping("/email-authenticate")
+    public ResponseEntity emailAuthenticate(@RequestBody UserDto.EmailAuthRequestDto emailAuthRequestDto) {
+        try {
+            String code = emailSendService.sendCode(emailAuthRequestDto.getEmail(), emailAuthRequestDto.getType());  // 인증번호 발송
+            UserDto.EmailAuthResponseDto data = new UserDto.EmailAuthResponseDto(code);
+
+            return new ResponseEntity<>(new ResultDto(200, "인증번호 발송 성공", data), HttpStatus.OK);
+        } catch (BadRequestURIException e) {
+            return new ResponseEntity<>(new ErrorResultDto(400, "Bad Request: " + e.getMessage(), "잘못된 요청입니다"), HttpStatus.BAD_REQUEST);
         }
     }
 

@@ -12,4 +12,7 @@ public interface LoginApiService {
     @POST("login")
     Call<ResultDto> login(@Body UserDto.LoginRequestDto loginRequestDto);
 
+    @POST("email-authenticate")
+    Call<ResultDto> login(@Body UserDto.EmailAuthRequestDto emailAuthRequestDto);
+
 }

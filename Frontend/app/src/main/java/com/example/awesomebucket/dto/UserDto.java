@@ -25,4 +25,19 @@ public class UserDto {
         private long id;  // 회원 ID
     }
 
+    /**
+     * 이메일 인증 DTO
+     */
+    @Getter
+    @AllArgsConstructor
+    public static class EmailAuthRequestDto {
+        private String type;  // 종류 [회원가입, 비밀번호 찾기]
+        private String email;  // 이메일
+    }
+
+    @Getter
+    public static class EmailAuthResponseDto {
+        private String authenticationCode;  // 인증 번호
+    }
+
 }

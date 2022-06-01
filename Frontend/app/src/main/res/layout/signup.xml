@@ -153,7 +153,7 @@
         android:layout_marginTop="15dp"
         android:backgroundTint="#E1E1E1"
         android:clickable="false"
-        android:paddingVertical="15dp"
+        android:paddingVertical="18dp"
         android:text="회 원 가 입"
         android:textColor="@color/white"
         android:textSize="18sp"
