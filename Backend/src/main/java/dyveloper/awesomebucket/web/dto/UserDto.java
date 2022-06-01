@@ -37,4 +37,14 @@ public class UserDto {
         private String authenticationCode;  // 인증 번호
     }
 
+    /**
+     * 회원가입 DTO
+     */
+    @Getter
+    public static class JoinRequestDto {
+        private String email;  // 이메일
+        private String password;  // 비밀번호
+        private String name;  // 이름
+    }
+
 }
