@@ -5,6 +5,7 @@ import dyveloper.awesomebucket.exception.NotFoundResourceException;
 import dyveloper.awesomebucket.exception.UnauthorizedAccessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -44,4 +45,13 @@ public class UserService {
         }
     }
 
+    // 비밀번호 변경
+    @Transactional
+    public void changePassword(String email, String password) {
+        User user = findByEmail(email);
+        if (user == null) {  // 존재하지 않는 이메일로 비밀번호 변경 시도
+            throw new NotFoundResourceException("가입된 이메일이 없습니다");
+        }
+        user.changePassword(password);  // 비밀번호 변경
+    }
 }

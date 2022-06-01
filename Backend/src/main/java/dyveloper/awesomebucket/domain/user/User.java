@@ -38,4 +38,12 @@ public class User extends BaseEntity {  // 회원
         this.password = password;
         this.name = name;
     }
+
+
+    //== 비즈니스 로직 ==//
+
+    // 비밀번호 변경
+    public void changePassword(String newPassword) {
+        this.password = newPassword;
+    }
 }

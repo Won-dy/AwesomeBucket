@@ -1,6 +1,7 @@
 package com.example.awesomebucket.activity;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import com.example.awesomebucket.MyConstant;
 import com.example.awesomebucket.R;
 import com.example.awesomebucket.api.APIClient;
 import com.example.awesomebucket.api.LoginApiService;
+import com.example.awesomebucket.api.UserApiService;
 import com.example.awesomebucket.dto.ErrorResultDto;
 import com.example.awesomebucket.dto.ResultDto;
 import com.example.awesomebucket.dto.UserDto;
@@ -45,6 +47,7 @@ public class FindPwActivity extends AppCompatActivity {
 
     Retrofit client = APIClient.getClient();
     LoginApiService loginApiService;
+    UserApiService userApiService;
 
     // 커스텀 토스트 메시지
     View toastView;
@@ -212,6 +215,68 @@ public class FindPwActivity extends AppCompatActivity {
                     PrintToast(checkPasswordResult);
                     return;
                 }
+
+                // 비밀번호 변경
+                userApiService = client.create(UserApiService.class);
+                Call<ResultDto> call = userApiService.changePassword(new UserDto.LoginRequestDto(email, newPassword));
+                call.enqueue(new Callback<ResultDto>() {
+                    @Override
+                    public void onResponse(Call<ResultDto> call, Response<ResultDto> response) {
+                        ResultDto result = response.body();  // 응답 결과 바디
+
+                        if (result != null && response.isSuccessful()) {
+                            PrintToast("비밀번호가 재설정되었습니다.");
+                            Log.i("Change Password", "SUCCESS");
+
+                            // 로그인 화면으로 이동
+                            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                            startActivity(intent);
+                        } else {
+                            try {
+                                Log.i("Change Password", "FAIL");
+                                Log.e("Response error", response.toString());
+
+                                // 에러 바디를 ErrorResultDto로 convert
+                                Converter<ResponseBody, ErrorResultDto> errorConverter = client.responseBodyConverter(ErrorResultDto.class, ErrorResultDto.class.getAnnotations());
+                                ErrorResultDto error = errorConverter.convert(response.errorBody());
+
+                                Log.e("ErrorResultDto", error.toString());
+
+                                String errorMessage = error.getMessage();  // 에러 메시지
+
+                                // 비밀번호 재설정 실패
+                                if (errorMessage != null) {  // 개발자가 설정한 오류
+                                    PrintToast(errorMessage);  // 에러 메시지 출력
+
+                                    // 입력, 버튼 활성화 및 비활성화
+                                    emailET.setFocusable(true);
+                                    emailET.setFocusableInTouchMode(true);
+                                    codeET.setFocusable(true);
+                                    codeET.setFocusableInTouchMode(true);
+                                    sendCodeBtn.setClickable(true);
+                                    sendCodeBtn.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.lightpurple)));
+                                    authBtn.setClickable(true);
+                                    authBtn.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.lightpurple)));
+                                    newPasswordTV.setTextColor(getColor(R.color.lightpurple));
+                                    newPasswordET.setFocusable(false);
+                                    resetPasswordBtn.setClickable(false);
+                                    resetPasswordBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E1E1E1")));
+
+                                } else {
+                                    PrintToast("비밀번호 재설정 실패. 잠시후 다시 시도해주세요.");
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResultDto> call, Throwable t) {
+                        Log.e("Throwable error", t.getMessage());
+                        PrintToast("비밀번호 재설정 실패. 잠시후 다시 시도해주세요.");
+                    }
+                });
 
             }
         });
