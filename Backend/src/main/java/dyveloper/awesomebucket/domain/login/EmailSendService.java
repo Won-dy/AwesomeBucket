@@ -32,8 +32,10 @@ public class EmailSendService {
         message.setTo(email);
         if (type.equals("join")) {
             message.setSubject("[AwesomeBucket] 회원가입 인증번호 안내");
+        } else if (type.equals("findPw")) {
+            message.setSubject("[AwesomeBucket] 비밀번호 찾기 인증번호 안내");
         } else {
-            throw new BadRequestURIException("Use 'join' for 'type'");
+            throw new BadRequestURIException("Use 'join' or 'findPw' for 'type'");
         }
         message.setText("아래 인증번호를 인증번호 기입란에 입력하시기 바랍니다.\n\n인증 번호 : " + code);
         javaMailSender.send(message);
