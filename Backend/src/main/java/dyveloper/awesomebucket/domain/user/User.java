@@ -22,7 +22,6 @@ public class User extends BaseEntity {  // 회원
     private String password;  // 비밀번호
 
     private String name;  // 이름
-    private String tel;  // 전화번호
 
     @OneToMany(mappedBy = "user")
     private List<Category> categories = new ArrayList<>();  // 카테고리
