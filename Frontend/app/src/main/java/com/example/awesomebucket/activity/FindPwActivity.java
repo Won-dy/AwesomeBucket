@@ -248,6 +248,8 @@ public class FindPwActivity extends AppCompatActivity {
                                 if (errorMessage != null) {  // 개발자가 설정한 오류
                                     PrintToast(errorMessage);  // 에러 메시지 출력
 
+                                    authenticationCode = "";  // 서버로부터 받은 인증번호 초기화
+
                                     // 입력, 버튼 활성화 및 비활성화
                                     emailET.setFocusable(true);
                                     emailET.setFocusableInTouchMode(true);
