@@ -206,10 +206,10 @@ public class SignupActivity extends AppCompatActivity {
 
                 // 비밀번호, 이름이 모두 입력되었으면 회원가입 버튼 활성화
                 if (!isEmptyPassword && !isEmptyName) {
-                    joinBtn.setClickable(true);
-                    joinBtn.setBackgroundTintList(ColorStateList.valueOf(R.color.purple));
+                    joinBtn.setEnabled(true);
+                    joinBtn.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.purple)));
                 } else {
-                    joinBtn.setClickable(false);
+                    joinBtn.setEnabled(false);
                     joinBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E1E1E1")));
                 }
             }
@@ -234,10 +234,10 @@ public class SignupActivity extends AppCompatActivity {
 
                 // 비밀번호, 이름이 모두 입력되었으면 회원가입 버튼 활성화
                 if (!isEmptyPassword && !isEmptyName) {
-                    joinBtn.setClickable(true);
-                    joinBtn.setBackgroundTintList(ColorStateList.valueOf(R.color.purple));
+                    joinBtn.setEnabled(true);
+                    joinBtn.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.purple)));
                 } else {
-                    joinBtn.setClickable(false);
+                    joinBtn.setEnabled(false);
                     joinBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E1E1E1")));
                 }
             }
@@ -305,7 +305,7 @@ public class SignupActivity extends AppCompatActivity {
                                     nameTv.setTextColor(getColor(R.color.lightpurple));
                                     passwordET.setFocusable(false);
                                     nameET.setFocusable(false);
-                                    joinBtn.setClickable(false);
+                                    joinBtn.setEnabled(false);
                                     joinBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E1E1E1")));
 
                                 } else {

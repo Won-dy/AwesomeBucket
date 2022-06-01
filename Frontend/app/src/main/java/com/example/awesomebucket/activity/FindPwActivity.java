@@ -193,10 +193,10 @@ public class FindPwActivity extends AppCompatActivity {
             public void afterTextChanged(Editable editable) {
                 // 새 비밀번호가 입력되었으면 비밀번호 재설정 버튼 활성화
                 if (editable.toString().trim().getBytes().length >= 8) {
-                    resetPasswordBtn.setClickable(true);
+                    resetPasswordBtn.setEnabled(true);
                     resetPasswordBtn.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.purple)));
                 } else {
-                    resetPasswordBtn.setClickable(false);
+                    resetPasswordBtn.setEnabled(false);
                     resetPasswordBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E1E1E1")));
                 }
             }
@@ -261,7 +261,7 @@ public class FindPwActivity extends AppCompatActivity {
                                     authBtn.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.lightpurple)));
                                     newPasswordTV.setTextColor(getColor(R.color.lightpurple));
                                     newPasswordET.setFocusable(false);
-                                    resetPasswordBtn.setClickable(false);
+                                    resetPasswordBtn.setEnabled(false);
                                     resetPasswordBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E1E1E1")));
 
                                 } else {
