@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -14,6 +16,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.awesomebucket.MyConstant;
 import com.example.awesomebucket.R;
 import com.example.awesomebucket.api.APIClient;
 import com.example.awesomebucket.api.LoginApiService;
@@ -24,6 +27,8 @@ import com.example.awesomebucket.exception.NoInputDataException;
 import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -47,7 +52,9 @@ public class SignupActivity extends AppCompatActivity {
     Toast toast;
 
     String authenticationCode;
-    String email, inputCode;
+    String email, inputCode, password, name;
+    boolean isEmptyPassword = true;
+    boolean isEmptyName = true;
 
     @SuppressLint("ResourceAsColor")
     @Override
@@ -80,6 +87,12 @@ public class SignupActivity extends AppCompatActivity {
 
                     if (email.getBytes().length <= 0)
                         throw new NoInputDataException("이메일을 입력하세요");
+
+                    String checkEmailResult = checkEmail(email);// 이메일 패턴 체크
+                    if (!checkEmailResult.equals("PASS")) {  // 이메일 패턴 체크 실패
+                        PrintToast(checkEmailResult);
+                        return;
+                    }
 
                     loginApiService = client.create(LoginApiService.class);
                     Call<ResultDto> call = loginApiService.login(new UserDto.EmailAuthRequestDto("join", email));
@@ -171,6 +184,110 @@ public class SignupActivity extends AppCompatActivity {
             }
         });
 
+        passwordET.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                // 비밀번호 입력이 8자 이상인지 확인
+                if (editable.toString().trim().getBytes().length >= 8)
+                    isEmptyPassword = false;
+                else
+                    isEmptyPassword = true;
+
+                // 비밀번호, 이름이 모두 입력되었으면 회원가입 버튼 활성화
+                if (!isEmptyPassword && !isEmptyName) {
+                    joinBtn.setClickable(true);
+                    joinBtn.setBackgroundTintList(ColorStateList.valueOf(R.color.purple));
+                } else {
+                    joinBtn.setClickable(false);
+                    joinBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E1E1E1")));
+                }
+            }
+        });
+
+        nameET.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                // 이름 입력이 빈 값인지 확인
+                if (editable.toString().trim().getBytes().length > 0)
+                    isEmptyName = false;
+                else
+                    isEmptyName = true;
+
+                // 비밀번호, 이름이 모두 입력되었으면 회원가입 버튼 활성화
+                if (!isEmptyPassword && !isEmptyName) {
+                    joinBtn.setClickable(true);
+                    joinBtn.setBackgroundTintList(ColorStateList.valueOf(R.color.purple));
+                } else {
+                    joinBtn.setClickable(false);
+                    joinBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E1E1E1")));
+                }
+            }
+        });
+
+        joinBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                password = passwordET.getText().toString();
+                name = nameET.getText().toString().trim();
+
+                String checkPasswordResult = checkPassword(password);// 비밀번호 패턴 체크
+
+                // 비밀번호 패턴 체크 실패
+                if (!checkPasswordResult.equals("PASS")) {
+                    PrintToast(checkPasswordResult);
+                    return;
+                }
+
+            }
+        });
+
+    }
+
+
+    //**************************** 이메일 패턴 체크를 위한 checkEmail() 함수 정의 *******************************
+    public String checkEmail(String email) {
+        Matcher matcher;  // 정규식 검사 객체
+
+        // 정규식 체크
+        matcher = Pattern.compile(MyConstant.emailPattern).matcher(email);
+        if (!matcher.matches())
+            return "이메일 형식이 올바르지 않습니다";
+
+        return "PASS";
+    }
+
+
+    //**************************** 비밀번호 패턴 체크를 위한 checkPassword() 함수 정의 *******************************
+    public String checkPassword(String password) {
+        Matcher matcher;  // 정규식 검사 객체
+
+        // 공백 체크
+        matcher = Pattern.compile(MyConstant.blankPattern).matcher(password);
+        if (matcher.find())
+            return "비밀번호는 공백을 포함할 수 없습니다";
+
+        // 정규식 체크
+        matcher = Pattern.compile(MyConstant.pwPattern).matcher(password);
+        if (!matcher.matches())
+            return "비밀번호는 영문, 숫자를 포함해야합니다";
+
+        return "PASS";
     }
 
 
