@@ -1,6 +1,9 @@
 # AwesomeBucket
 <br>
 
+![AwesomeBucket_ReleaseNote](https://user-images.githubusercontent.com/65672148/178559798-677e7d5b-7590-4106-ab38-baf4ed193c95.PNG)
+
+
 ## 0. 개요
 
 버킷리스트를 기록하고 관리하는 앱입니다.
